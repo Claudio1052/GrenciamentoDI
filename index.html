@@ -31,8 +31,8 @@
             <a href="#" onclick="showPage('professores')" id="nav-professores" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 transition">
                 <i class="fa-solid fa-chalkboard-user w-6"></i> Professores
             </a>
-            <a href="#" onclick="showPage('escala2')" id="nav-escala2" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 transition">
-                <i class="fa-solid fa-calendar-days w-6"></i> escala2
+            <a href="#" onclick="showPage('escala')" id="nav-escala" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 transition">
+                <i class="fa-solid fa-calendar-days w-6"></i> Escala
             </a>
             <a href="#" onclick="showPage('checkin')" id="nav-checkin" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 transition">
                 <i class="fa-solid fa-qrcode w-6"></i> Check-in / Out
@@ -42,7 +42,7 @@
 
     <div class="md:hidden fixed top-0 w-full bg-white shadow z-50 flex justify-between p-4 items-center">
         <h1 class="text-lg font-bold text-indigo-600">Dep. Infantil</h1>
-        <button onclick="document.querySelector('aside').classList.toggle('hidden'); document.querySelector('aside').classList.toggle('absolute'); document.querySelector('aside').classList.toggle('z-50'); document.querySelector('aside').classList.toggle('h-full');" class="text-gray-600"><i class="fa-solid fa-bars text-2xl"></i></button>
+        <button onclick="toggleSidebar()" class="text-gray-600"><i class="fa-solid fa-bars text-2xl"></i></button>
     </div>
 
     <main class="flex-1 overflow-y-auto p-4 md:p-8 mt-14 md:mt-0">
@@ -55,7 +55,7 @@
                     <p class="text-3xl font-bold text-gray-800" id="dash-total-kids">0</p>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500">
-                    <p class="text-gray-500 text-sm">Professores escala2dos</p>
+                    <p class="text-gray-500 text-sm">Professores Escalados</p>
                     <p class="text-3xl font-bold text-gray-800" id="dash-teachers">0</p>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-purple-500">
@@ -76,7 +76,7 @@
                 <div class="bg-white p-6 rounded-lg shadow-sm">
                     <h3 class="font-bold text-gray-700 mb-4">Últimas Presenças</h3>
                     <div id="live-attendance-feed" class="space-y-3 max-h-60 overflow-y-auto">
-                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -93,26 +93,27 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sala Preferida</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefone</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="teachers-list" class="divide-y divide-gray-200">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </section>
 
-        <section id="escala2" class="hidden-section">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Gerenciamento de escala2</h2>
+        <section id="escala" class="hidden-section">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Gerenciamento de Escala</h2>
             <div class="bg-white p-6 rounded-lg shadow mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Data do Culto</label>
-                        <input type="date" id="escala2-data" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <input type="date" id="escala-data" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Sala</label>
-                        <select id="escala2-sala" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" onchange="loadTeachersForescala2()">
+                        <select id="escala-sala" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" onchange="loadTeachersForEscala()">
                             <option value="0-2">0 a 2 anos</option>
                             <option value="3-5">3 a 5 anos</option>
                             <option value="6-8">6 a 8 anos</option>
@@ -120,20 +121,20 @@
                         </select>
                     </div>
                     <div class="flex items-end">
-                        <button onclick="saveescala2()" class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Salvar escala2</button>
+                        <button onclick="saveEscala()" class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Salvar Escala</button>
                     </div>
                 </div>
                 <div class="mt-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Selecione os Professores (Multipla Escolha)</label>
-                    <div id="escala2-teachers-select" class="grid grid-cols-2 md:grid-cols-4 gap-2 border p-4 rounded bg-gray-50 max-h-40 overflow-y-auto">
+                    <div id="escala-teachers-select" class="grid grid-cols-2 md:grid-cols-4 gap-2 border p-4 rounded bg-gray-50 max-h-40 overflow-y-auto">
                         <p class="text-gray-500 text-sm col-span-4">Selecione uma sala para ver os professores.</p>
                     </div>
                 </div>
             </div>
 
-            <h3 class="font-bold text-gray-700 mb-4">escala2s Agendadas</h3>
-            <div class="bg-white rounded-lg shadow overflow-hidden" id="escala2-list">
-                </div>
+            <h3 class="font-bold text-gray-700 mb-4">Escalas Agendadas</h3>
+            <div class="bg-white rounded-lg shadow overflow-hidden" id="escala-list">
+            </div>
         </section>
 
         <section id="checkin" class="hidden-section">
@@ -198,10 +199,13 @@
 
     <script>
         // --- CONFIGURAÇÃO SUPABASE ---
-        // ⚠️ SUBSTITUA PELAS SUAS CHAVES DO PAINEL SUPABASE
-        const supabaseUrl = 'https://nekbbkenxcukoortusge.supabase.co'; 
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc'; 
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseUrl = 'https://nekbbkenxcukoortusge.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // --- VARIÁVEIS GLOBAIS ---
+        let html5QrcodeScanner = null;
+        let myChart = null;
 
         // --- NAVEGAÇÃO ---
         function showPage(pageId) {
@@ -209,221 +213,331 @@
             document.getElementById(pageId).classList.remove('hidden-section');
             
             document.querySelectorAll('nav a').forEach(el => el.classList.remove('active-nav'));
-            document.getElementById('nav-' + pageId).classList.add('active-nav');
+            const navElement = document.getElementById('nav-' + pageId);
+            if (navElement) navElement.classList.add('active-nav');
 
-            if(pageId === 'professores') loadTeachers();
-            if(pageId === 'escala2') {
-                loadescala2s();
-                document.getElementById('escala2-data').valueAsDate = new Date();
+            if (pageId === 'professores') loadTeachers();
+            if (pageId === 'escala') {
+                loadEscalas();
+                document.getElementById('escala-data').valueAsDate = new Date();
             }
-            if(pageId === 'dashboard') loadDashboard();
-            if(pageId === 'checkin') startScanner();
+            if (pageId === 'dashboard') loadDashboard();
+            if (pageId === 'checkin') startScanner();
             else stopScanner();
+        }
+
+        function toggleSidebar() {
+            const aside = document.querySelector('aside');
+            aside.classList.toggle('hidden');
+            aside.classList.toggle('absolute');
+            aside.classList.toggle('z-50');
+            aside.classList.toggle('h-full');
         }
 
         // --- GESTÃO DE PROFESSORES ---
         async function loadTeachers() {
-            const { data, error } = await supabase.from('professores').select('*').order('nome');
-            const list = document.getElementById('teachers-list');
-            list.innerHTML = '';
-            data.forEach(p => {
-                list.innerHTML += `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.nome}</td>
-                        <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs">${p.sala_preferencia}</span></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onclick="deleteProfessor(${p.id})" class="text-red-600 hover:text-red-900 ml-2">Excluir</button>
-                        </td>
-                    </tr>
-                `;
-            });
+            try {
+                const { data, error } = await supabase.from('professores').select('*').order('nome');
+                if (error) throw error;
+                
+                const list = document.getElementById('teachers-list');
+                list.innerHTML = '';
+                
+                if (data && data.length > 0) {
+                    data.forEach(p => {
+                        list.innerHTML += `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">${p.nome}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs">
+                                        ${p.sala_preferencia || 'Não definida'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">${p.telefone || 'Não informado'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="deleteProfessor(${p.id})" class="text-red-600 hover:text-red-900 ml-2">Excluir</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    list.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                                Nenhum professor cadastrado
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar professores:', error);
+                alert('Erro ao carregar professores');
+            }
         }
 
         async function saveProfessor() {
-            const nome = document.getElementById('prof-nome').value;
+            const nome = document.getElementById('prof-nome').value.trim();
             const sala = document.getElementById('prof-sala').value;
-            const telefone = document.getElementById('prof-tel').value;
+            const telefone = document.getElementById('prof-tel').value.trim();
 
-            if(!nome) return alert("Preencha o nome");
+            if (!nome) {
+                alert("Preencha o nome do professor");
+                return;
+            }
 
-            const { error } = await supabase.from('professores').insert([{ nome, sala_preferencia: sala, telefone }]);
-            
-            if(error) alert('Erro ao salvar');
-            else {
+            try {
+                const { error } = await supabase.from('professores').insert([{ 
+                    nome, 
+                    sala_preferencia: sala, 
+                    telefone 
+                }]);
+                
+                if (error) throw error;
+                
                 closeModal('modal-professor');
                 loadTeachers();
                 document.getElementById('prof-nome').value = '';
+                document.getElementById('prof-tel').value = '';
+                alert('Professor salvo com sucesso!');
+            } catch (error) {
+                console.error('Erro ao salvar professor:', error);
+                alert('Erro ao salvar professor');
             }
         }
 
         async function deleteProfessor(id) {
-            if(confirm('Tem certeza?')) {
-                await supabase.from('professores').delete().eq('id', id);
+            if (!confirm('Tem certeza que deseja excluir este professor?')) return;
+            
+            try {
+                const { error } = await supabase.from('professores').delete().eq('id', id);
+                if (error) throw error;
                 loadTeachers();
+                alert('Professor excluído com sucesso!');
+            } catch (error) {
+                console.error('Erro ao excluir professor:', error);
+                alert('Erro ao excluir professor');
             }
         }
 
-        // --- escala2 ---
-        async function loadTeachersForescala2() {
-            // Carrega todos, mas marca a sala preferida
-            const { data } = await supabase.from('professores').select('*');
-            const container = document.getElementById('escala2-teachers-select');
-            const currentRoom = document.getElementById('escala2-sala').value;
-            
-            container.innerHTML = '';
-            data.forEach(p => {
-                const isPref = p.sala_preferencia === currentRoom;
-                container.innerHTML += `
-                    <label class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer ${isPref ? 'bg-indigo-50 border-indigo-200' : ''}">
-                        <input type="checkbox" value="${p.id}" data-name="${p.nome}" class="rounded text-indigo-600">
-                        <span class="text-sm ${isPref ? 'font-bold' : ''}">${p.nome}</span>
-                    </label>
-                `;
-            });
+        // --- ESCALA ---
+        async function loadTeachersForEscala() {
+            try {
+                const { data } = await supabase.from('professores').select('*');
+                const container = document.getElementById('escala-teachers-select');
+                const currentRoom = document.getElementById('escala-sala').value;
+                
+                container.innerHTML = '';
+                
+                if (data && data.length > 0) {
+                    data.forEach(p => {
+                        const isPref = p.sala_preferencia === currentRoom;
+                        container.innerHTML += `
+                            <label class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer ${isPref ? 'bg-indigo-50 border-indigo-200' : ''}">
+                                <input type="checkbox" value="${p.id}" data-name="${p.nome}" class="rounded text-indigo-600">
+                                <span class="text-sm ${isPref ? 'font-bold text-indigo-700' : ''}">${p.nome}</span>
+                            </label>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-gray-500 text-sm col-span-4">Nenhum professor cadastrado</p>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar professores para escala:', error);
+            }
         }
 
-        async function saveescala2() {
-            const dataCulto = document.getElementById('escala2-data').value;
-            const sala = document.getElementById('escala2-sala').value;
+        async function saveEscala() {
+            const dataCulto = document.getElementById('escala-data').value;
+            const sala = document.getElementById('escala-sala').value;
             
-            // Pegar IDs selecionados
-            const checkboxes = document.querySelectorAll('#escala2-teachers-select input:checked');
+            if (!dataCulto) {
+                alert("Selecione uma data para o culto");
+                return;
+            }
+            
+            const checkboxes = document.querySelectorAll('#escala-teachers-select input:checked');
             const profIds = Array.from(checkboxes).map(cb => cb.value);
             const profNomes = Array.from(checkboxes).map(cb => cb.getAttribute('data-name')).join(', ');
 
-            if(profIds.length === 0) return alert("Selecione pelo menos um professor");
+            if (profIds.length === 0) {
+                alert("Selecione pelo menos um professor");
+                return;
+            }
 
-            const { error } = await supabase.from('escala2s').insert([{
-                data_culto: dataCulto,
-                sala: sala,
-                professores_ids: profIds,
-                professores_nomes: profNomes
-            }]);
+            try {
+                // USANDO escalas2 (conforme seu banco de dados)
+                const { error } = await supabase.from('escalas2').insert([{
+                    data_culto: dataCulto,
+                    sala: sala,
+                    professores_ids: profIds,
+                    professores_nomes: profNomes
+                }]);
 
-            if(!error) {
-                alert('escala2 salva!');
-                loadescala2s();
+                if (error) throw error;
+                
+                alert('Escala salva com sucesso!');
+                loadEscalas();
+            } catch (error) {
+                console.error('Erro ao salvar escala:', error);
+                alert('Erro ao salvar escala: ' + error.message);
             }
         }
 
-        async function loadescala2s() {
-            const { data } = await supabase.from('escala2s').select('*').order('data_culto', {ascending: false});
-            const div = document.getElementById('escala2-list');
-            div.innerHTML = '';
-            data.forEach(e => {
-                div.innerHTML += `
-                    <div class="p-4 border-b flex justify-between items-center hover:bg-gray-50">
-                        <div>
-                            <p class="font-bold text-gray-800">${new Date(e.data_culto).toLocaleDateString('pt-BR')} - Sala ${e.sala}</p>
-                            <p class="text-sm text-gray-600">Profs: ${e.professores_nomes}</p>
-                        </div>
-                        <button onclick="deleteescala2(${e.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `;
-            });
+        async function loadEscalas() {
+            try {
+                // USANDO escalas2 (conforme seu banco de dados)
+                const { data, error } = await supabase.from('escalas2').select('*').order('data_culto', { ascending: false });
+                
+                if (error) throw error;
+                
+                const div = document.getElementById('escala-list');
+                div.innerHTML = '';
+                
+                if (data && data.length > 0) {
+                    data.forEach(e => {
+                        const dataFormatada = new Date(e.data_culto).toLocaleDateString('pt-BR');
+                        div.innerHTML += `
+                            <div class="p-4 border-b flex justify-between items-center hover:bg-gray-50">
+                                <div>
+                                    <p class="font-bold text-gray-800">${dataFormatada} - Sala ${e.sala}</p>
+                                    <p class="text-sm text-gray-600">Professores: ${e.professores_nomes || 'Nenhum'}</p>
+                                </div>
+                                <button onclick="deleteEscala(${e.id})" class="text-red-500 hover:text-red-700">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    div.innerHTML = '<div class="p-4 text-center text-gray-500">Nenhuma escala cadastrada</div>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar escalas:', error);
+                const div = document.getElementById('escala-list');
+                div.innerHTML = '<div class="p-4 text-center text-red-500">Erro ao carregar escalas</div>';
+            }
         }
         
-        async function deleteescala2(id) {
-            await supabase.from('escala2s').delete().eq('id', id);
-            loadescala2s();
+        async function deleteEscala(id) {
+            if (!confirm('Tem certeza que deseja excluir esta escala?')) return;
+            
+            try {
+                // USANDO escalas2 (conforme seu banco de dados)
+                const { error } = await supabase.from('escalas2').delete().eq('id', id);
+                if (error) throw error;
+                loadEscalas();
+                alert('Escala excluída com sucesso!');
+            } catch (error) {
+                console.error('Erro ao excluir escala:', error);
+                alert('Erro ao excluir escala');
+            }
         }
 
         // --- CHECK-IN / QR CODE LOGIC ---
-        let html5QrcodeScanner;
-
         function startScanner() {
-            if(html5QrcodeScanner) return; // Já iniciado
+            if (html5QrcodeScanner) return;
 
-            html5QrcodeScanner = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            html5QrcodeScanner = new window.Html5QrcodeScanner("reader", {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            });
             
-            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess);
+            html5QrcodeScanner.render(onScanSuccess);
         }
 
         function stopScanner() {
-            if(html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => {
-                    html5QrcodeScanner.clear();
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().then(() => {
                     html5QrcodeScanner = null;
-                }).catch(err => console.log(err));
+                }).catch(err => console.error('Erro ao parar scanner:', err));
             }
         }
 
         async function onScanSuccess(decodedText, decodedResult) {
-            // Pausa scanner temporariamente
-            html5QrcodeScanner.pause();
+            if (!html5QrcodeScanner) return;
+            
+            html5QrcodeScanner.pause(true);
             
             const resultDiv = document.getElementById('scan-result');
             resultDiv.classList.remove('hidden');
-            resultDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando QR: ${decodedText}...`;
+            resultDiv.innerHTML = `<div class="text-blue-600"><i class="fa-solid fa-spinner fa-spin"></i> Processando QR: ${decodedText}...</div>`;
 
-            // Verificar se a criança já está "dentro" (entrada sem saída)
-            const { data: presencaAtiva, error } = await supabase
-                .from('presencas')
-                .select('*')
-                .eq('qrcode_hash', decodedText)
-                .is('hora_saida', null)
-                .single();
-
-            if (presencaAtiva) {
-                // REALIZAR SAÍDA
-                await supabase
-                    .from('presencas')
-                    .update({ 
-                        hora_saida: new Date().toISOString(),
-                        status: 'finalizado'
-                    })
-                    .eq('id', presencaAtiva.id);
-                
-                resultDiv.className = "mt-4 p-4 rounded bg-red-100 text-red-800 border border-red-200";
-                resultDiv.innerHTML = `
-                    <h3 class="font-bold text-lg">SAÍDA REGISTRADA!</h3>
-                    <p>${presencaAtiva.nome_crianca}</p>
-                    <p>Sala: ${presencaAtiva.sala}</p>
-                `;
-                setTimeout(() => { 
-                    resultDiv.classList.add('hidden'); 
-                    html5QrcodeScanner.resume(); 
-                }, 3000);
-
-            } else {
-                // REALIZAR ENTRADA (Ou Novo Cadastro)
-                // Primeiro verificamos se essa criança já veio antes para autocompletar
-                const { data: historico } = await supabase
+            try {
+                const { data: presencaAtiva, error } = await supabase
                     .from('presencas')
                     .select('*')
                     .eq('qrcode_hash', decodedText)
-                    .order('created_at', {ascending: false})
-                    .limit(1);
+                    .is('hora_saida', null)
+                    .single();
 
-                if (historico && historico.length > 0) {
-                    // Já existe cadastro antigo, preencher auto
-                    document.getElementById('reg-nome').value = historico[0].nome_crianca;
-                    document.getElementById('reg-idade').value = historico[0].idade;
-                    document.getElementById('reg-resp').value = historico[0].nome_responsavel;
-                    autoSelectRoom(); // Atualiza a sala baseado na idade
+                if (error && error.code !== 'PGRST116') throw error;
+
+                if (presencaAtiva) {
+                    // REALIZAR SAÍDA
+                    await supabase
+                        .from('presencas')
+                        .update({ 
+                            hora_saida: new Date().toISOString(),
+                            status: 'finalizado'
+                        })
+                        .eq('id', presencaAtiva.id);
+                    
+                    resultDiv.className = "mt-4 p-4 rounded bg-red-100 text-red-800 border border-red-200";
+                    resultDiv.innerHTML = `
+                        <h3 class="font-bold text-lg">SAÍDA REGISTRADA!</h3>
+                        <p><strong>Criança:</strong> ${presencaAtiva.nome_crianca}</p>
+                        <p><strong>Sala:</strong> ${presencaAtiva.sala}</p>
+                        <p><strong>Hora:</strong> ${new Date().toLocaleTimeString('pt-BR')}</p>
+                    `;
                 } else {
-                    // Limpar form
-                    document.getElementById('reg-nome').value = '';
-                    document.getElementById('reg-idade').value = '';
-                    document.getElementById('reg-sala').value = '';
-                    document.getElementById('reg-resp').value = '';
-                }
+                    // REALIZAR ENTRADA (Ou Novo Cadastro)
+                    const { data: historico } = await supabase
+                        .from('presencas')
+                        .select('*')
+                        .eq('qrcode_hash', decodedText)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
 
-                document.getElementById('reg-qrcode').innerText = decodedText;
-                document.getElementById('form-registro-entrada').classList.remove('hidden');
-                resultDiv.classList.add('hidden');
-                // Scanner fica pausado até confirmar
+                    if (historico && historico.length > 0) {
+                        // Já existe cadastro antigo, preencher auto
+                        document.getElementById('reg-nome').value = historico[0].nome_crianca;
+                        document.getElementById('reg-idade').value = historico[0].idade;
+                        document.getElementById('reg-resp').value = historico[0].nome_responsavel;
+                        autoSelectRoom();
+                    } else {
+                        // Limpar form
+                        document.getElementById('reg-nome').value = '';
+                        document.getElementById('reg-idade').value = '';
+                        document.getElementById('reg-sala').value = '';
+                        document.getElementById('reg-resp').value = '';
+                    }
+
+                    document.getElementById('reg-qrcode').innerText = decodedText;
+                    document.getElementById('form-registro-entrada').classList.remove('hidden');
+                    resultDiv.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Erro ao processar QR Code:', error);
+                resultDiv.className = "mt-4 p-4 rounded bg-red-100 text-red-800 border border-red-200";
+                resultDiv.innerHTML = `<p class="font-bold">Erro ao processar QR Code</p>`;
+            } finally {
+                setTimeout(() => {
+                    resultDiv.classList.add('hidden');
+                    if (html5QrcodeScanner) {
+                        html5QrcodeScanner.resume();
+                    }
+                }, 3000);
             }
         }
 
         function autoSelectRoom() {
-            const idade = parseInt(document.getElementById('reg-idade').value);
+            const idade = parseInt(document.getElementById('reg-idade').value) || 0;
             let sala = '';
-            if(idade >= 0 && idade <= 2) sala = '0-2';
-            else if(idade >= 3 && idade <= 5) sala = '3-5';
-            else if(idade >= 6 && idade <= 8) sala = '6-8';
-            else if(idade >= 9 && idade <= 12) sala = '9-12';
+            
+            if (idade >= 0 && idade <= 2) sala = '0-2';
+            else if (idade >= 3 && idade <= 5) sala = '3-5';
+            else if (idade >= 6 && idade <= 8) sala = '6-8';
+            else if (idade >= 9 && idade <= 12) sala = '9-12';
             else sala = 'Outros';
             
             document.getElementById('reg-sala').value = sala;
@@ -431,110 +545,178 @@
 
         async function confirmEntry() {
             const qr = document.getElementById('reg-qrcode').innerText;
-            const nome = document.getElementById('reg-nome').value;
-            const idade = document.getElementById('reg-idade').value;
+            const nome = document.getElementById('reg-nome').value.trim();
+            const idade = parseInt(document.getElementById('reg-idade').value) || 0;
             const sala = document.getElementById('reg-sala').value;
-            const resp = document.getElementById('reg-resp').value;
+            const resp = document.getElementById('reg-resp').value.trim();
 
-            if(!nome || !idade) return alert("Preencha os dados");
+            if (!nome) {
+                alert("Preencha o nome da criança");
+                return;
+            }
 
-            const { error } = await supabase.from('presencas').insert([{
-                qrcode_hash: qr,
-                nome_crianca: nome,
-                idade: idade,
-                sala: sala,
-                nome_responsavel: resp,
-                hora_entrada: new Date().toISOString()
-            }]);
+            if (idade <= 0 || idade > 12) {
+                alert("Informe uma idade válida entre 1 e 12 anos");
+                return;
+            }
 
-            if(!error) {
+            try {
+                const { error } = await supabase.from('presencas').insert([{
+                    qrcode_hash: qr,
+                    nome_crianca: nome,
+                    idade: idade,
+                    sala: sala,
+                    nome_responsavel: resp,
+                    hora_entrada: new Date().toISOString()
+                }]);
+
+                if (error) throw error;
+                
                 document.getElementById('form-registro-entrada').classList.add('hidden');
+                document.getElementById('reg-nome').value = '';
+                document.getElementById('reg-idade').value = '';
+                document.getElementById('reg-sala').value = '';
+                document.getElementById('reg-resp').value = '';
+                
                 alert("Entrada Registrada com Sucesso!");
-                html5QrcodeScanner.resume();
-            } else {
+                
+                if (html5QrcodeScanner) {
+                    html5QrcodeScanner.resume();
+                }
+            } catch (error) {
+                console.error('Erro ao registrar entrada:', error);
                 alert("Erro ao registrar entrada.");
             }
         }
 
         // --- DASHBOARD ---
-        let myChart = null;
-
         async function loadDashboard() {
-            const today = new Date().toISOString().split('T')[0];
-            
-            // Busca presenças de hoje
-            const { data: presencas } = await supabase
-                .from('presencas')
-                .select('*')
-                .gte('hora_entrada', today + 'T00:00:00');
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Busca presenças de hoje
+                const { data: presencas, error: presError } = await supabase
+                    .from('presencas')
+                    .select('*')
+                    .gte('hora_entrada', today + 'T00:00:00');
 
-            // Métricas
-            const totalKids = presencas.length;
-            document.getElementById('dash-total-kids').innerText = totalKids;
+                if (presError) throw presError;
 
-            // Agrupar por sala
-            const counts = { '0-2': 0, '3-5': 0, '6-8': 0, '9-12': 0 };
-            presencas.forEach(p => {
-                if(counts[p.sala] !== undefined) counts[p.sala]++;
-            });
+                // Métricas
+                const totalKids = presencas ? presencas.length : 0;
+                document.getElementById('dash-total-kids').innerText = totalKids;
 
-            // Sala mais cheia
-            const topRoom = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-            document.getElementById('dash-top-room').innerText = totalKids > 0 ? "Sala " + topRoom : "-";
-
-            // Professores escala2dos Hoje
-            const { data: escala2s } = await supabase
-                .from('escala2s')
-                .select('*')
-                .eq('data_culto', today);
-            
-            let totalProfs = 0;
-            if(escala2s) escala2s.forEach(e => totalProfs += (e.professores_ids ? e.professores_ids.length : 0));
-            document.getElementById('dash-teachers').innerText = totalProfs;
-
-            // Gráfico
-            const ctx = document.getElementById('chartSalas').getContext('2d');
-            if(myChart) myChart.destroy();
-            
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(counts),
-                    datasets: [{
-                        label: 'Crianças Presentes',
-                        data: Object.values(counts),
-                        backgroundColor: ['#60a5fa', '#34d399', '#a78bfa', '#fbbf24']
-                    }]
+                // Agrupar por sala
+                const counts = { '0-2': 0, '3-5': 0, '6-8': 0, '9-12': 0 };
+                if (presencas) {
+                    presencas.forEach(p => {
+                        if (counts[p.sala] !== undefined) counts[p.sala]++;
+                    });
                 }
-            });
 
-            // Feed
-            const feed = document.getElementById('live-attendance-feed');
-            feed.innerHTML = '';
-            // Pegar as 5 ultimas
-            const ultimas = presencas.sort((a,b) => new Date(b.hora_entrada) - new Date(a.hora_entrada)).slice(0, 5);
-            ultimas.forEach(u => {
-                const time = new Date(u.hora_entrada).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                feed.innerHTML += `
-                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                            <span class="font-medium text-sm text-gray-700">${u.nome_crianca}</span>
-                        </div>
-                        <span class="text-xs text-gray-500">${u.sala} | ${time}</span>
-                    </div>
-                `;
-            });
+                // Sala mais cheia
+                let topRoom = '-';
+                if (totalKids > 0) {
+                    topRoom = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                    document.getElementById('dash-top-room').innerText = "Sala " + topRoom;
+                } else {
+                    document.getElementById('dash-top-room').innerText = topRoom;
+                }
+
+                // Professores escalados Hoje - USANDO escalas2
+                const { data: escalas, error: escError } = await supabase
+                    .from('escalas2')
+                    .select('*')
+                    .eq('data_culto', today);
+
+                if (escError) throw escError;
+                
+                let totalProfs = 0;
+                if (escalas) {
+                    escalas.forEach(e => {
+                        if (e.professores_ids) {
+                            totalProfs += e.professores_ids.length;
+                        }
+                    });
+                }
+                document.getElementById('dash-teachers').innerText = totalProfs;
+
+                // Gráfico
+                const ctx = document.getElementById('chartSalas').getContext('2d');
+                if (myChart) myChart.destroy();
+                
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(counts),
+                        datasets: [{
+                            label: 'Crianças Presentes',
+                            data: Object.values(counts),
+                            backgroundColor: ['#60a5fa', '#34d399', '#a78bfa', '#fbbf24']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Feed
+                const feed = document.getElementById('live-attendance-feed');
+                feed.innerHTML = '';
+                
+                if (presencas && presencas.length > 0) {
+                    const ultimas = [...presencas]
+                        .sort((a, b) => new Date(b.hora_entrada) - new Date(a.hora_entrada))
+                        .slice(0, 5);
+                    
+                    ultimas.forEach(u => {
+                        const time = new Date(u.hora_entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        feed.innerHTML += `
+                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <span class="font-medium text-sm text-gray-700">${u.nome_crianca}</span>
+                                </div>
+                                <span class="text-xs text-gray-500">${u.sala} | ${time}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    feed.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma presença hoje</p>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+                alert('Erro ao carregar dashboard');
+            }
         }
 
         // --- UTILITÁRIOS ---
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+        function openModal(id) { 
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+        
+        function closeModal(id) { 
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
 
         // Inicializar Dashboard
         showPage('dashboard');
-
     </script>
 </body>
 </html>
-
