@@ -47,6 +47,7 @@
 
     <main class="flex-1 overflow-y-auto p-4 md:p-8 mt-14 md:mt-0">
         
+        <!-- DASHBOARD -->
         <section id="dashboard" class="block">
             <h2 class="text-2xl font-bold mb-6 text-gray-800">Visão Geral</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -81,6 +82,7 @@
             </div>
         </section>
 
+        <!-- PROFESSORES -->
         <section id="professores" class="hidden-section">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">Cadastro de Professores</h2>
@@ -103,6 +105,7 @@
             </div>
         </section>
 
+        <!-- ESCALA -->
         <section id="escala" class="hidden-section">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Gerenciamento de Escala</h2>
             <div class="bg-white p-6 rounded-lg shadow mb-6">
@@ -137,6 +140,7 @@
             </div>
         </section>
 
+        <!-- CHECK-IN -->
         <section id="checkin" class="hidden-section">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Check-in & Check-out</h2>
             
@@ -178,6 +182,7 @@
 
     </main>
 
+    <!-- MODAL PROFESSOR -->
     <div id="modal-professor" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-96">
             <h3 class="text-xl font-bold mb-4">Dados do Professor</h3>
@@ -201,6 +206,13 @@
         // --- CONFIGURAÇÃO SUPABASE ---
         const supabaseUrl = 'https://nekbbkenxcukoortusge.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc';
+        
+        // Verificar se as chaves estão presentes
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Chaves do Supabase não configuradas!');
+            alert('Configure as chaves do Supabase para continuar.');
+        }
+        
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // --- VARIÁVEIS GLOBAIS ---
@@ -209,21 +221,64 @@
 
         // --- NAVEGAÇÃO ---
         function showPage(pageId) {
-            document.querySelectorAll('section').forEach(el => el.classList.add('hidden-section'));
-            document.getElementById(pageId).classList.remove('hidden-section');
+            console.log('Mostrando página:', pageId);
             
-            document.querySelectorAll('nav a').forEach(el => el.classList.remove('active-nav'));
-            const navElement = document.getElementById('nav-' + pageId);
-            if (navElement) navElement.classList.add('active-nav');
-
-            if (pageId === 'professores') loadTeachers();
-            if (pageId === 'escala') {
-                loadEscalas();
-                document.getElementById('escala-data').valueAsDate = new Date();
+            // Esconder todas as seções
+            const sections = document.querySelectorAll('main > section');
+            sections.forEach(section => {
+                section.classList.add('hidden-section');
+            });
+            
+            // Mostrar a seção selecionada
+            const targetSection = document.getElementById(pageId);
+            if (targetSection) {
+                targetSection.classList.remove('hidden-section');
+            } else {
+                console.error('Seção não encontrada:', pageId);
+                // Mostrar dashboard como fallback
+                document.getElementById('dashboard').classList.remove('hidden-section');
             }
-            if (pageId === 'dashboard') loadDashboard();
-            if (pageId === 'checkin') startScanner();
-            else stopScanner();
+            
+            // Atualizar navegação ativa
+            document.querySelectorAll('nav a').forEach(el => {
+                el.classList.remove('active-nav');
+            });
+            
+            const navElement = document.getElementById('nav-' + pageId);
+            if (navElement) {
+                navElement.classList.add('active-nav');
+            }
+            
+            // Executar ações específicas da página
+            switch(pageId) {
+                case 'professores':
+                    loadTeachers();
+                    break;
+                case 'escala':
+                    loadEscalas();
+                    // Definir data atual como padrão
+                    const dataInput = document.getElementById('escala-data');
+                    if (dataInput) {
+                        const hoje = new Date();
+                        const dataFormatada = hoje.toISOString().split('T')[0];
+                        dataInput.value = dataFormatada;
+                    }
+                    break;
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'checkin':
+                    startScanner();
+                    break;
+                default:
+                    stopScanner();
+                    break;
+            }
+            
+            // Fechar sidebar no mobile
+            if (window.innerWidth < 768) {
+                toggleSidebar();
+            }
         }
 
         function toggleSidebar() {
@@ -232,12 +287,18 @@
             aside.classList.toggle('absolute');
             aside.classList.toggle('z-50');
             aside.classList.toggle('h-full');
+            aside.classList.toggle('bg-white');
+            aside.classList.toggle('shadow-lg');
         }
 
         // --- GESTÃO DE PROFESSORES ---
         async function loadTeachers() {
             try {
-                const { data, error } = await supabase.from('professores').select('*').order('nome');
+                const { data, error } = await supabase
+                    .from('professores')
+                    .select('*')
+                    .order('nome');
+                    
                 if (error) throw error;
                 
                 const list = document.getElementById('teachers-list');
@@ -255,7 +316,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">${p.telefone || 'Não informado'}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button onclick="deleteProfessor(${p.id})" class="text-red-600 hover:text-red-900 ml-2">Excluir</button>
+                                    <button onclick="deleteProfessor(${p.id})" class="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded">Excluir</button>
                                 </td>
                             </tr>
                         `;
@@ -263,7 +324,8 @@
                 } else {
                     list.innerHTML = `
                         <tr>
-                            <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                <i class="fa-solid fa-users-slash text-3xl mb-2 block"></i>
                                 Nenhum professor cadastrado
                             </td>
                         </tr>
@@ -271,7 +333,14 @@
                 }
             } catch (error) {
                 console.error('Erro ao carregar professores:', error);
-                alert('Erro ao carregar professores');
+                const list = document.getElementById('teachers-list');
+                list.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-red-500">
+                            Erro ao carregar professores
+                        </td>
+                    </tr>
+                `;
             }
         }
 
@@ -298,10 +367,11 @@
                 loadTeachers();
                 document.getElementById('prof-nome').value = '';
                 document.getElementById('prof-tel').value = '';
+                document.getElementById('prof-sala').value = '0-2';
                 alert('Professor salvo com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar professor:', error);
-                alert('Erro ao salvar professor');
+                alert('Erro ao salvar professor: ' + error.message);
             }
         }
 
@@ -332,17 +402,19 @@
                     data.forEach(p => {
                         const isPref = p.sala_preferencia === currentRoom;
                         container.innerHTML += `
-                            <label class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer ${isPref ? 'bg-indigo-50 border-indigo-200' : ''}">
-                                <input type="checkbox" value="${p.id}" data-name="${p.nome}" class="rounded text-indigo-600">
-                                <span class="text-sm ${isPref ? 'font-bold text-indigo-700' : ''}">${p.nome}</span>
+                            <label class="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer ${isPref ? 'bg-indigo-50 border border-indigo-200' : ''}">
+                                <input type="checkbox" value="${p.id}" data-name="${p.nome}" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                <span class="text-sm ${isPref ? 'font-bold text-indigo-700' : 'text-gray-700'}">${p.nome}</span>
                             </label>
                         `;
                     });
                 } else {
-                    container.innerHTML = '<p class="text-gray-500 text-sm col-span-4">Nenhum professor cadastrado</p>';
+                    container.innerHTML = '<p class="text-gray-500 text-sm col-span-4 p-4 text-center">Nenhum professor cadastrado</p>';
                 }
             } catch (error) {
                 console.error('Erro ao carregar professores para escala:', error);
+                const container = document.getElementById('escala-teachers-select');
+                container.innerHTML = '<p class="text-red-500 text-sm col-span-4 p-4 text-center">Erro ao carregar professores</p>';
             }
         }
 
@@ -365,18 +437,21 @@
             }
 
             try {
-                // USANDO escalas2 (conforme seu banco de dados)
                 const { error } = await supabase.from('escalas2').insert([{
                     data_culto: dataCulto,
                     sala: sala,
                     professores_ids: profIds,
-                    professores_nomes: profNomes
+                    professores_nomes: profNomes,
+                    created_at: new Date().toISOString()
                 }]);
 
                 if (error) throw error;
                 
                 alert('Escala salva com sucesso!');
                 loadEscalas();
+                
+                // Limpar seleção
+                checkboxes.forEach(cb => cb.checked = false);
             } catch (error) {
                 console.error('Erro ao salvar escala:', error);
                 alert('Erro ao salvar escala: ' + error.message);
@@ -385,8 +460,10 @@
 
         async function loadEscalas() {
             try {
-                // USANDO escalas2 (conforme seu banco de dados)
-                const { data, error } = await supabase.from('escalas2').select('*').order('data_culto', { ascending: false });
+                const { data, error } = await supabase
+                    .from('escalas2')
+                    .select('*')
+                    .order('data_culto', { ascending: false });
                 
                 if (error) throw error;
                 
@@ -400,16 +477,21 @@
                             <div class="p-4 border-b flex justify-between items-center hover:bg-gray-50">
                                 <div>
                                     <p class="font-bold text-gray-800">${dataFormatada} - Sala ${e.sala}</p>
-                                    <p class="text-sm text-gray-600">Professores: ${e.professores_nomes || 'Nenhum'}</p>
+                                    <p class="text-sm text-gray-600 mt-1">Professores: ${e.professores_nomes || 'Nenhum'}</p>
                                 </div>
-                                <button onclick="deleteEscala(${e.id})" class="text-red-500 hover:text-red-700">
-                                    <i class="fa-solid fa-trash"></i>
+                                <button onclick="deleteEscala(${e.id})" class="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded">
+                                    <i class="fa-solid fa-trash"></i> Excluir
                                 </button>
                             </div>
                         `;
                     });
                 } else {
-                    div.innerHTML = '<div class="p-4 text-center text-gray-500">Nenhuma escala cadastrada</div>';
+                    div.innerHTML = `
+                        <div class="p-8 text-center text-gray-500">
+                            <i class="fa-solid fa-calendar-xmark text-3xl mb-2 block"></i>
+                            Nenhuma escala cadastrada
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error('Erro ao carregar escalas:', error);
@@ -422,7 +504,6 @@
             if (!confirm('Tem certeza que deseja excluir esta escala?')) return;
             
             try {
-                // USANDO escalas2 (conforme seu banco de dados)
                 const { error } = await supabase.from('escalas2').delete().eq('id', id);
                 if (error) throw error;
                 loadEscalas();
@@ -433,16 +514,34 @@
             }
         }
 
-        // --- CHECK-IN / QR CODE LOGIC ---
+        // --- CHECK-IN / QR CODE ---
         function startScanner() {
-            if (html5QrcodeScanner) return;
+            if (html5QrcodeScanner) {
+                // Scanner já está ativo
+                return;
+            }
 
-            html5QrcodeScanner = new window.Html5QrcodeScanner("reader", {
-                fps: 10,
-                qrbox: { width: 250, height: 250 }
-            });
-            
-            html5QrcodeScanner.render(onScanSuccess);
+            try {
+                html5QrcodeScanner = new window.Html5QrcodeScanner(
+                    "reader",
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        rememberLastUsedCamera: true,
+                        supportedScanTypes: [window.Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+                    },
+                    false
+                );
+                
+                html5QrcodeScanner.render(onScanSuccess, onScanError);
+            } catch (error) {
+                console.error('Erro ao iniciar scanner:', error);
+                alert('Erro ao iniciar scanner de QR Code. Verifique as permissões da câmera.');
+            }
+        }
+
+        function onScanError(error) {
+            console.warn('Erro no scanner:', error);
         }
 
         function stopScanner() {
@@ -456,78 +555,105 @@
         async function onScanSuccess(decodedText, decodedResult) {
             if (!html5QrcodeScanner) return;
             
+            // Pausar scanner temporariamente
             html5QrcodeScanner.pause(true);
             
             const resultDiv = document.getElementById('scan-result');
             resultDiv.classList.remove('hidden');
-            resultDiv.innerHTML = `<div class="text-blue-600"><i class="fa-solid fa-spinner fa-spin"></i> Processando QR: ${decodedText}...</div>`;
+            resultDiv.innerHTML = `
+                <div class="text-blue-600 text-center">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x mb-2"></i>
+                    <p>Processando QR Code...</p>
+                </div>
+            `;
 
             try {
-                const { data: presencaAtiva, error } = await supabase
+                // Verificar se há presença ativa (entrada sem saída)
+                const { data: presencaAtiva, error: presencaError } = await supabase
                     .from('presencas')
                     .select('*')
                     .eq('qrcode_hash', decodedText)
                     .is('hora_saida', null)
                     .single();
 
-                if (error && error.code !== 'PGRST116') throw error;
+                if (presencaError && presencaError.code !== 'PGRST116') {
+                    throw presencaError;
+                }
 
                 if (presencaAtiva) {
-                    // REALIZAR SAÍDA
-                    await supabase
+                    // REGISTRAR SAÍDA
+                    const { error: updateError } = await supabase
                         .from('presencas')
                         .update({ 
                             hora_saida: new Date().toISOString(),
-                            status: 'finalizado'
+                            status: 'finalizado',
+                            updated_at: new Date().toISOString()
                         })
                         .eq('id', presencaAtiva.id);
+
+                    if (updateError) throw updateError;
                     
-                    resultDiv.className = "mt-4 p-4 rounded bg-red-100 text-red-800 border border-red-200";
+                    resultDiv.className = "mt-4 p-4 rounded bg-green-100 text-green-800 border border-green-200";
                     resultDiv.innerHTML = `
-                        <h3 class="font-bold text-lg">SAÍDA REGISTRADA!</h3>
+                        <h3 class="font-bold text-lg mb-2">✓ SAÍDA REGISTRADA!</h3>
                         <p><strong>Criança:</strong> ${presencaAtiva.nome_crianca}</p>
                         <p><strong>Sala:</strong> ${presencaAtiva.sala}</p>
-                        <p><strong>Hora:</strong> ${new Date().toLocaleTimeString('pt-BR')}</p>
+                        <p><strong>Responsável:</strong> ${presencaAtiva.nome_responsavel || 'Não informado'}</p>
+                        <p class="mt-2 text-sm"><strong>Hora:</strong> ${new Date().toLocaleTimeString('pt-BR')}</p>
                     `;
+                    
+                    // Atualizar dashboard se estiver visível
+                    if (!document.getElementById('dashboard').classList.contains('hidden-section')) {
+                        loadDashboard();
+                    }
                 } else {
-                    // REALIZAR ENTRADA (Ou Novo Cadastro)
-                    const { data: historico } = await supabase
+                    // VERIFICAR SE JÁ EXISTE CADASTRO ANTERIOR
+                    const { data: historico, error: historicoError } = await supabase
                         .from('presencas')
                         .select('*')
                         .eq('qrcode_hash', decodedText)
                         .order('created_at', { ascending: false })
                         .limit(1);
 
+                    if (historicoError) throw historicoError;
+
+                    // Preencher formulário com dados históricos ou limpar
                     if (historico && historico.length > 0) {
-                        // Já existe cadastro antigo, preencher auto
-                        document.getElementById('reg-nome').value = historico[0].nome_crianca;
-                        document.getElementById('reg-idade').value = historico[0].idade;
-                        document.getElementById('reg-resp').value = historico[0].nome_responsavel;
+                        document.getElementById('reg-nome').value = historico[0].nome_crianca || '';
+                        document.getElementById('reg-idade').value = historico[0].idade || '';
+                        document.getElementById('reg-resp').value = historico[0].nome_responsavel || '';
                         autoSelectRoom();
                     } else {
-                        // Limpar form
+                        // Limpar formulário para novo cadastro
                         document.getElementById('reg-nome').value = '';
                         document.getElementById('reg-idade').value = '';
-                        document.getElementById('reg-sala').value = '';
                         document.getElementById('reg-resp').value = '';
+                        document.getElementById('reg-sala').value = '';
                     }
 
                     document.getElementById('reg-qrcode').innerText = decodedText;
                     document.getElementById('form-registro-entrada').classList.remove('hidden');
                     resultDiv.classList.add('hidden');
+                    
+                    // Não retomar scanner ainda - aguardar confirmação do formulário
+                    return;
                 }
             } catch (error) {
                 console.error('Erro ao processar QR Code:', error);
                 resultDiv.className = "mt-4 p-4 rounded bg-red-100 text-red-800 border border-red-200";
-                resultDiv.innerHTML = `<p class="font-bold">Erro ao processar QR Code</p>`;
-            } finally {
-                setTimeout(() => {
-                    resultDiv.classList.add('hidden');
-                    if (html5QrcodeScanner) {
-                        html5QrcodeScanner.resume();
-                    }
-                }, 3000);
+                resultDiv.innerHTML = `
+                    <h3 class="font-bold text-lg mb-2">Erro ao processar</h3>
+                    <p>${error.message || 'Ocorreu um erro ao processar o QR Code'}</p>
+                `;
             }
+            
+            // Retomar scanner após 3 segundos
+            setTimeout(() => {
+                resultDiv.classList.add('hidden');
+                if (html5QrcodeScanner) {
+                    html5QrcodeScanner.resume();
+                }
+            }, 3000);
         }
 
         function autoSelectRoom() {
@@ -560,6 +686,11 @@
                 return;
             }
 
+            if (!sala) {
+                alert("Selecione uma sala válida");
+                return;
+            }
+
             try {
                 const { error } = await supabase.from('presencas').insert([{
                     qrcode_hash: qr,
@@ -567,25 +698,34 @@
                     idade: idade,
                     sala: sala,
                     nome_responsavel: resp,
-                    hora_entrada: new Date().toISOString()
+                    hora_entrada: new Date().toISOString(),
+                    status: 'ativo',
+                    created_at: new Date().toISOString()
                 }]);
 
                 if (error) throw error;
                 
+                // Limpar e esconder formulário
                 document.getElementById('form-registro-entrada').classList.add('hidden');
                 document.getElementById('reg-nome').value = '';
                 document.getElementById('reg-idade').value = '';
                 document.getElementById('reg-sala').value = '';
                 document.getElementById('reg-resp').value = '';
                 
-                alert("Entrada Registrada com Sucesso!");
+                alert("✓ Entrada Registrada com Sucesso!");
                 
+                // Atualizar dashboard se estiver visível
+                if (!document.getElementById('dashboard').classList.contains('hidden-section')) {
+                    loadDashboard();
+                }
+                
+                // Retomar scanner
                 if (html5QrcodeScanner) {
                     html5QrcodeScanner.resume();
                 }
             } catch (error) {
                 console.error('Erro ao registrar entrada:', error);
-                alert("Erro ao registrar entrada.");
+                alert("Erro ao registrar entrada: " + error.message);
             }
         }
 
@@ -594,15 +734,16 @@
             try {
                 const today = new Date().toISOString().split('T')[0];
                 
-                // Busca presenças de hoje
+                // Buscar presenças de hoje
                 const { data: presencas, error: presError } = await supabase
                     .from('presencas')
                     .select('*')
-                    .gte('hora_entrada', today + 'T00:00:00');
+                    .gte('created_at', today + 'T00:00:00')
+                    .order('hora_entrada', { ascending: false });
 
                 if (presError) throw presError;
 
-                // Métricas
+                // Calcular métricas
                 const totalKids = presencas ? presencas.length : 0;
                 document.getElementById('dash-total-kids').innerText = totalKids;
 
@@ -610,20 +751,26 @@
                 const counts = { '0-2': 0, '3-5': 0, '6-8': 0, '9-12': 0 };
                 if (presencas) {
                     presencas.forEach(p => {
-                        if (counts[p.sala] !== undefined) counts[p.sala]++;
+                        if (counts[p.sala] !== undefined) {
+                            counts[p.sala]++;
+                        }
                     });
                 }
 
-                // Sala mais cheia
+                // Determinar sala mais cheia
                 let topRoom = '-';
-                if (totalKids > 0) {
-                    topRoom = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-                    document.getElementById('dash-top-room').innerText = "Sala " + topRoom;
-                } else {
-                    document.getElementById('dash-top-room').innerText = topRoom;
-                }
+                let maxCount = 0;
+                
+                Object.entries(counts).forEach(([sala, count]) => {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        topRoom = sala;
+                    }
+                });
+                
+                document.getElementById('dash-top-room').innerText = totalKids > 0 ? `Sala ${topRoom} (${maxCount})` : '-';
 
-                // Professores escalados Hoje - USANDO escalas2
+                // Buscar escalas de hoje
                 const { data: escalas, error: escError } = await supabase
                     .from('escalas2')
                     .select('*')
@@ -632,18 +779,25 @@
                 if (escError) throw escError;
                 
                 let totalProfs = 0;
-                if (escalas) {
+                if (escalas && escalas.length > 0) {
                     escalas.forEach(e => {
-                        if (e.professores_ids) {
+                        if (e.professores_ids && Array.isArray(e.professores_ids)) {
                             totalProfs += e.professores_ids.length;
                         }
                     });
                 }
                 document.getElementById('dash-teachers').innerText = totalProfs;
 
-                // Gráfico
-                const ctx = document.getElementById('chartSalas').getContext('2d');
-                if (myChart) myChart.destroy();
+                // Atualizar gráfico
+                const ctx = document.getElementById('chartSalas');
+                if (!ctx) {
+                    console.error('Canvas do gráfico não encontrado');
+                    return;
+                }
+                
+                if (myChart) {
+                    myChart.destroy();
+                }
                 
                 myChart = new Chart(ctx, {
                     type: 'bar',
@@ -652,49 +806,73 @@
                         datasets: [{
                             label: 'Crianças Presentes',
                             data: Object.values(counts),
-                            backgroundColor: ['#60a5fa', '#34d399', '#a78bfa', '#fbbf24']
+                            backgroundColor: ['#60a5fa', '#34d399', '#a78bfa', '#fbbf24'],
+                            borderColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'],
+                            borderWidth: 1
                         }]
                     },
                     options: {
                         responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
                         scales: {
                             y: {
                                 beginAtZero: true,
                                 ticks: {
-                                    stepSize: 1
+                                    stepSize: 1,
+                                    precision: 0
                                 }
                             }
                         }
                     }
                 });
 
-                // Feed
+                // Atualizar feed de presenças
                 const feed = document.getElementById('live-attendance-feed');
                 feed.innerHTML = '';
                 
                 if (presencas && presencas.length > 0) {
-                    const ultimas = [...presencas]
-                        .sort((a, b) => new Date(b.hora_entrada) - new Date(a.hora_entrada))
-                        .slice(0, 5);
+                    const ultimas = presencas.slice(0, 8); // Mostrar até 8 entradas
                     
                     ultimas.forEach(u => {
-                        const time = new Date(u.hora_entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        const time = new Date(u.hora_entrada).toLocaleTimeString('pt-BR', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        });
+                        
+                        const statusColor = u.hora_saida ? 'bg-gray-400' : 'bg-green-500';
+                        const statusText = u.hora_saida ? 'Saída' : 'Presente';
+                        
                         feed.innerHTML += `
-                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                                    <span class="font-medium text-sm text-gray-700">${u.nome_crianca}</span>
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full ${statusColor}"></div>
+                                    <div>
+                                        <p class="font-medium text-gray-800">${u.nome_crianca}</p>
+                                        <p class="text-xs text-gray-500">${u.sala} • ${u.idade} anos</p>
+                                    </div>
                                 </div>
-                                <span class="text-xs text-gray-500">${u.sala} | ${time}</span>
+                                <div class="text-right">
+                                    <p class="text-sm font-medium text-gray-700">${time}</p>
+                                    <p class="text-xs text-gray-500">${statusText}</p>
+                                </div>
                             </div>
                         `;
                     });
                 } else {
-                    feed.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma presença hoje</p>';
+                    feed.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fa-solid fa-child-reaching text-3xl mb-2"></i>
+                            <p>Nenhuma presença hoje</p>
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error('Erro ao carregar dashboard:', error);
-                alert('Erro ao carregar dashboard');
+                // Não mostrar alerta para não interromper a experiência
             }
         }
 
@@ -715,8 +893,65 @@
             }
         }
 
-        // Inicializar Dashboard
-        showPage('dashboard');
+        // Adicionar eventos para fechar modal com ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal('modal-professor');
+            }
+        });
+
+        // Adicionar evento para fechar modal clicando fora
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('modal-professor');
+            if (modal && !modal.classList.contains('hidden') && e.target === modal) {
+                closeModal('modal-professor');
+            }
+        });
+
+        // Inicializar a aplicação
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar se todas as seções existem
+            const requiredSections = ['dashboard', 'professores', 'escala', 'checkin'];
+            requiredSections.forEach(sectionId => {
+                if (!document.getElementById(sectionId)) {
+                    console.error('Seção não encontrada:', sectionId);
+                }
+            });
+            
+            // Mostrar dashboard inicial
+            showPage('dashboard');
+            
+            // Adicionar evento para recarregar dashboard periodicamente
+            setInterval(() => {
+                if (!document.getElementById('dashboard').classList.contains('hidden-section')) {
+                    loadDashboard();
+                }
+            }, 30000); // Atualizar a cada 30 segundos
+        });
+
+        // Adicionar suporte para navegação com teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        showPage('dashboard');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        showPage('professores');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        showPage('escala');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        showPage('checkin');
+                        break;
+                }
+            }
+        });
     </script>
 </body>
 </html>
