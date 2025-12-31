@@ -28,7 +28,7 @@
 
     <header class="bg-indigo-600 text-white p-4 shadow-lg flex justify-between items-center z-10">
         <h1 class="text-xl font-bold"><i class="fa-solid fa-shapes"></i> Kids System</h1>
-        <div class="text-sm" id="status-connection">Conectando...</div>
+        <div class="text-sm font-bold" id="status-connection">Conectando...</div>
     </header>
 
     <div class="flex flex-1 overflow-hidden">
@@ -109,7 +109,7 @@
             </div>
 
             <div id="escala" class="tab-content">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Escala de Professores (escala2)</h2>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Escala de Professores</h2>
                 
                 <div class="card max-w-2xl mx-auto">
                     <form id="form-escala" class="space-y-4">
@@ -242,22 +242,41 @@
 
     <script>
         // --- CONFIGURAÇÃO SUPABASE ---
-        // COLOQUE SUAS CHAVES AQUI
-        const SUPABASE_URL = 'https://nekbbkenxcukoortusge.supabase.co'; // Já preenchi com a URL do seu projeto
-        const SUPABASE_KEY = 'sb_publishable_uiJe9uprrZwArt20jFi2Wg_bIRBs_EP'; // <--- COLE SUA CHAVE AQUI
+        // !!! ATENÇÃO: SUBSTITUA APENAS AS DUAS LINHAS ABAIXO !!!
         
-        // Inicialização
+        const SUPABASE_URL = 'https://SEU_PROJETO.supabase.co'; // <--- COLOCAR SUA URL
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc'; // <--- COLOCAR SUA CHAVE ANON PUBLICA GIGANTE AQUI
+        
+        // -----------------------------------------------------
+
         let supabase;
+
+        // Inicialização
         try {
-            if(SUPABASE_KEY === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc') {
-                alert("Por favor, edite o arquivo HTML e insira sua chave SUPABASE_KEY na linha 257.");
-            } else {
-                supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                document.getElementById('status-connection').innerText = 'Conectado';
-                document.getElementById('status-connection').classList.add('text-green-300');
+            if (!SUPABASE_KEY.startsWith('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc')) {
+                console.warn("A chave Supabase parece incorreta. Verifique se copiou a chave 'anon' 'public'.");
+                document.getElementById('status-connection').innerText = 'Chave Inválida';
+                document.getElementById('status-connection').classList.add('text-red-500');
             }
+            
+            supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            
+            // Teste simples de conexão
+            supabase.from('professores').select('count', { count: 'exact', head: true }).then(({ error }) => {
+                if(error) {
+                    console.error("Erro ao conectar:", error);
+                    document.getElementById('status-connection').innerText = 'Erro Conexão';
+                    document.getElementById('status-connection').classList.add('text-red-300');
+                } else {
+                    document.getElementById('status-connection').innerText = 'Conectado';
+                    document.getElementById('status-connection').classList.add('text-green-300');
+                    loadDashboard(); // Carrega dados se conectar
+                }
+            });
+
         } catch (e) {
-            console.error("Erro Supabase", e);
+            console.error("Erro Inicialização", e);
+            document.getElementById('status-connection').innerText = 'Erro';
         }
 
         // --- NAVEGAÇÃO ---
@@ -310,7 +329,7 @@
         // --- PROFESSORES ---
         async function loadProfessores() {
             const { data, error } = await supabase.from('professores').select('*');
-            if (error) return console.error(error);
+            if (error) { console.error(error); return; }
             
             const tbody = document.getElementById('tabela-professores');
             tbody.innerHTML = '';
@@ -347,18 +366,19 @@
 
         // --- ESCALA (escala2) ---
         async function loadEscalaUI() {
-            // Carregar professores para o checkbox
             const { data: profs } = await supabase.from('professores').select('*');
             const container = document.getElementById('lista-selecao-professores');
             container.innerHTML = '';
-            profs.forEach(p => {
-                container.innerHTML += `
-                    <label class="flex items-center space-x-2">
-                        <input type="checkbox" name="prof-check" value="${p.nome}" class="rounded text-indigo-600">
-                        <span class="text-sm">${p.nome} <span class="text-xs text-gray-400">(${p.sala_preferencia})</span></span>
-                    </label>
-                `;
-            });
+            if(profs) {
+                profs.forEach(p => {
+                    container.innerHTML += `
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="prof-check" value="${p.nome}" class="rounded text-indigo-600">
+                            <span class="text-sm">${p.nome} <span class="text-xs text-gray-400">(${p.sala_preferencia})</span></span>
+                        </label>
+                    `;
+                });
+            }
             loadEscalasSalvas();
         }
 
@@ -366,20 +386,18 @@
             const dataCulto = document.getElementById('escala-data').value;
             const sala = document.getElementById('escala-sala').value;
             
-            // Pegar todos os checkboxes marcados
             const checkboxes = document.querySelectorAll('input[name="prof-check"]:checked');
             const professoresSelecionados = Array.from(checkboxes).map(cb => cb.value);
 
             if(!dataCulto || professoresSelecionados.length === 0) return alert("Preencha a data e selecione professores");
 
-            // Salvar no formato JSONB
             const { error } = await supabase.from('escala2').insert([{
                 data_culto: dataCulto,
                 sala: sala,
-                professores_ids: professoresSelecionados // Array de nomes
+                professores_ids: JSON.stringify(professoresSelecionados) // Convertendo para JSON
             }]);
 
-            if(error) alert('Erro ao salvar escala');
+            if(error) { console.error(error); alert('Erro ao salvar escala: ' + error.message); }
             else {
                 alert('Escala Salva!');
                 loadEscalasSalvas();
@@ -387,7 +405,6 @@
         }
 
         async function loadEscalasSalvas() {
-            // Pega escalas futuras ou de hoje
             const { data } = await supabase.from('escala2')
                 .select('*')
                 .order('data_culto', { ascending: false })
@@ -396,18 +413,25 @@
             const div = document.getElementById('lista-escalas');
             div.innerHTML = '';
             
-            data.forEach(e => {
-                // Formatar lista de professores do JSON
-                const profs = Array.isArray(e.professores_ids) ? e.professores_ids.join(', ') : e.professores_ids;
-                
-                div.innerHTML += `
-                    <div class="card border-t-4 border-indigo-500">
-                        <div class="font-bold text-gray-800">${new Date(e.data_culto).toLocaleDateString('pt-BR')}</div>
-                        <span class="sala-badge ${getSalaColor(e.sala)} block w-max my-2">${e.sala}</span>
-                        <div class="text-sm text-gray-600 mt-2">Professores: <br><b>${profs}</b></div>
-                    </div>
-                `;
-            });
+            if(data) {
+                data.forEach(e => {
+                    let profs = [];
+                    // Tratamento seguro do JSONB
+                    if (typeof e.professores_ids === 'string') {
+                        try { profs = JSON.parse(e.professores_ids); } catch(err){ profs = [e.professores_ids]; }
+                    } else {
+                        profs = e.professores_ids;
+                    }
+                    
+                    div.innerHTML += `
+                        <div class="card border-t-4 border-indigo-500">
+                            <div class="font-bold text-gray-800">${new Date(e.data_culto).toLocaleDateString('pt-BR')}</div>
+                            <span class="sala-badge ${getSalaColor(e.sala)} block w-max my-2">${e.sala}</span>
+                            <div class="text-sm text-gray-600 mt-2">Professores: <br><b>${Array.isArray(profs) ? profs.join(', ') : profs}</b></div>
+                        </div>
+                    `;
+                });
+            }
         }
 
         // --- CRIANÇAS & QR CODE ---
@@ -416,16 +440,18 @@
             const tbody = document.getElementById('tabela-criancas');
             tbody.innerHTML = '';
             
-            data.forEach(c => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 cursor-pointer" onclick="showQRCode('${c.nome}', '${c.sala}', '${c.qrcode_hash}')">
-                        <td class="px-4 py-2 border-b">${c.nome}</td>
-                        <td class="px-4 py-2 border-b">${c.idade}</td>
-                        <td class="px-4 py-2 border-b"><span class="sala-badge ${getSalaColor(c.sala)}">${c.sala}</span></td>
-                        <td class="px-4 py-2 border-b text-right"><i class="fa-solid fa-qrcode text-indigo-600"></i></td>
-                    </tr>
-                `;
-            });
+            if(data) {
+                data.forEach(c => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="showQRCode('${c.nome}', '${c.sala}', '${c.qrcode_hash}')">
+                            <td class="px-4 py-2 border-b">${c.nome}</td>
+                            <td class="px-4 py-2 border-b">${c.idade}</td>
+                            <td class="px-4 py-2 border-b"><span class="sala-badge ${getSalaColor(c.sala)}">${c.sala}</span></td>
+                            <td class="px-4 py-2 border-b text-right"><i class="fa-solid fa-qrcode text-indigo-600"></i></td>
+                        </tr>
+                    `;
+                });
+            }
         }
 
         async function saveCrianca() {
@@ -434,8 +460,6 @@
             const sala = getSalaPorIdade(idade);
             const resp = document.getElementById('crianca-resp').value;
 
-            // O QR CODE (uuid) é gerado automaticamente pelo banco no default, 
-            // mas vamos forçar um reload para pegá-lo
             const { error } = await supabase.from('criancas').insert([{
                 nome, idade, sala, nome_responsavel: resp
             }]);
@@ -453,7 +477,7 @@
             document.getElementById('qrcode-sala').innerText = sala;
             
             new QRCode(document.getElementById("qrcode-display"), {
-                text: hash, // O conteúdo do QR é o UUID
+                text: hash,
                 width: 128,
                 height: 128,
                 colorDark : "#000000",
@@ -463,36 +487,32 @@
         }
 
         // --- CHECK-IN / CHECK-OUT LOGIC ---
-        
-        // Listener para o input de Scanner (simula a leitura)
         const scannerInput = document.getElementById('scanner-input');
         let timeout = null;
 
         scannerInput.addEventListener('input', function(e) {
             clearTimeout(timeout);
-            // Aguarda 500ms após parar de digitar para processar (simulando a entrada rápida do leitor de código de barras/qr)
             timeout = setTimeout(() => {
                 processarCheckin(e.target.value);
-                e.target.value = ''; // Limpa para o próximo
+                e.target.value = ''; 
             }, 500);
         });
 
         async function processarCheckin(hash) {
             if(!hash) return;
             const resultDiv = document.getElementById('scan-result');
+            resultDiv.innerHTML = '<p class="text-blue-500">Processando...</p>';
+            resultDiv.classList.remove('hidden');
             
-            // 1. Achar a criança
-            const { data: crianca } = await supabase.from('criancas').select('*').eq('qrcode_hash', hash).single();
+            const { data: crianca, error } = await supabase.from('criancas').select('*').eq('qrcode_hash', hash).single();
             
-            if(!crianca) {
+            if(!crianca || error) {
                 resultDiv.innerHTML = `<div class="bg-red-100 text-red-700 p-2 rounded">QR Code não encontrado! Cadastre a criança primeiro.</div>`;
-                resultDiv.classList.remove('hidden');
                 return;
             }
 
             const hoje = new Date().toISOString().split('T')[0];
 
-            // 2. Verificar se já fez checkin hoje
             const { data: presenca } = await supabase.from('presenca')
                 .select('*')
                 .eq('crianca_id', crianca.id)
@@ -500,7 +520,6 @@
                 .single();
 
             if (!presenca) {
-                // REALIZAR CHECK-IN
                 await supabase.from('presenca').insert([{
                     crianca_id: crianca.id,
                     data_culto: hoje,
@@ -519,7 +538,6 @@
                 if(presenca.checkout) {
                      resultDiv.innerHTML = `<div class="bg-yellow-100 text-yellow-700 p-2 rounded">Esta criança já saiu hoje.</div>`;
                 } else {
-                    // REALIZAR CHECK-OUT
                     await supabase.from('presenca')
                         .update({ checkout: new Date().toISOString(), status: 'finalizado' })
                         .eq('id', presenca.id);
@@ -532,7 +550,6 @@
                         </div>`;
                 }
             }
-            resultDiv.classList.remove('hidden');
         }
 
         // --- DASHBOARD ---
@@ -541,23 +558,31 @@
         async function loadDashboard() {
             const hoje = new Date().toISOString().split('T')[0];
 
-            // Contagens
-            const { count: totalCriancas } = await supabase.from('criancas').select('*', { count: 'exact' });
+            // Buscar contagens
+            const { count: totalCriancas } = await supabase.from('criancas').select('*', { count: 'exact', head: true });
+            
             const { count: presentes } = await supabase.from('presenca')
-                .select('*', { count: 'exact' })
+                .select('*', { count: 'exact', head: true })
                 .eq('data_culto', hoje)
-                .is('checkout', null); // Apenas quem ainda não saiu
+                .is('checkout', null);
 
-            // Professores escalados hoje
             const { data: escalas } = await supabase.from('escala2').select('*').eq('data_culto', hoje);
             let totalProfs = 0;
             let listaProfsHtml = '';
             
-            escalas.forEach(e => {
-                const profs = Array.isArray(e.professores_ids) ? e.professores_ids : [];
-                totalProfs += profs.length;
-                listaProfsHtml += `<div class="flex justify-between border-b pb-1"><span>${e.sala}</span> <span class="font-bold">${profs.join(', ')}</span></div>`;
-            });
+            if(escalas) {
+                escalas.forEach(e => {
+                    let profs = [];
+                    // Parse seguro
+                    try {
+                        profs = (typeof e.professores_ids === 'string') ? JSON.parse(e.professores_ids) : e.professores_ids;
+                        if (!Array.isArray(profs)) profs = [profs];
+                    } catch(err) { profs = []; }
+
+                    totalProfs += profs.length;
+                    listaProfsHtml += `<div class="flex justify-between border-b pb-1"><span>${e.sala}</span> <span class="font-bold">${profs.join(', ')}</span></div>`;
+                });
+            }
 
             document.getElementById('dash-total').innerText = totalCriancas || 0;
             document.getElementById('dash-presentes').innerText = presentes || 0;
@@ -565,9 +590,7 @@
             document.getElementById('lista-professores-hoje').innerHTML = listaProfsHtml || '<p class="text-gray-400">Ninguém escalado hoje</p>';
 
             // Gráfico
-            // Para fazer o gráfico por sala, precisaríamos fazer um join complexo, 
-            // aqui faremos uma aproximação buscando as crianças presentes e contando suas salas
-            const { data: presencasAtivas, error } = await supabase
+            const { data: presencasAtivas } = await supabase
                 .from('presenca')
                 .select('crianca_id, criancas(sala)')
                 .eq('data_culto', hoje)
@@ -578,7 +601,6 @@
             if(presencasAtivas) {
                 presencasAtivas.forEach(p => {
                     if(p.criancas && p.criancas.sala) {
-                        // Limpeza básica da string da sala para bater com a chave
                         let s = p.criancas.sala;
                         if(counts[s] !== undefined) counts[s]++;
                     }
@@ -606,12 +628,6 @@
                 }
             });
         }
-        
-        // Carrega dashboard inicial
-        window.onload = function() {
-            loadDashboard();
-        }
-
     </script>
 </body>
 </html>
