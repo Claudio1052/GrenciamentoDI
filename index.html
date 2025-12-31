@@ -58,7 +58,7 @@
             </div>
 
             <div id="painel-salas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                </div>
+            </div>
         </div>
 
         <div id="historico" class="tab-content">
@@ -200,19 +200,27 @@
         // 1. DASHBOARD PRINCIPAL (AO VIVO)
         // ==========================================
         async function carregarDashboard() {
-            const hoje = new Date().toISOString().split('T')[0];
+            // AJUSTE: Garantir data local no formato YYYY-MM-DD
+            const now = new Date();
+            const hoje = now.getFullYear() + '-' + 
+                        String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                        String(now.getDate()).padStart(2, '0');
+
             const divSalas = document.getElementById('painel-salas');
             divSalas.innerHTML = '<div class="col-span-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Carregando dados de hoje...</div>';
 
-            // 1. Buscar Professores Escalados Hoje
-            const { data: escalas } = await _supabase.from('escala2').select('*').eq('data_culto', hoje);
+            // 1. Buscar Professores Escalados APENAS Hoje
+            const { data: escalas } = await _supabase
+                .from('escala2')
+                .select('*')
+                .eq('data_culto', hoje); // Filtro estrito pela data de hoje
 
-            // 2. Buscar Crianças Presentes (Hora Saída IS NULL) + Dados da Criança (Join)
+            // 2. Buscar Crianças Presentes (Hora Saída IS NULL)
             const { data: presencas } = await _supabase
                 .from('presenca')
                 .select('sala_atual, hora_saida, criancas(nome, nome_responsavel)')
                 .eq('data_culto', hoje)
-                .is('hora_saida', null); // Só quem ainda está na sala
+                .is('hora_saida', null); 
 
             // Estrutura Base das Salas
             const estruturaSalas = {
@@ -222,8 +230,8 @@
                 "9-12": { titulo: "9 a 12 Anos", profs: "Não escalado", kids: [] }
             };
 
-            // Preencher Professores
-            if(escalas) {
+            // Preencher Professores (Se houver escala para hoje)
+            if(escalas && escalas.length > 0) {
                 escalas.forEach(esc => {
                     if(estruturaSalas[esc.sala]) {
                         estruturaSalas[esc.sala].profs = esc.professores_nomes;
@@ -379,7 +387,11 @@
                 else salaFinal = "Visitante";
             }
 
-            const hoje = new Date().toISOString().split('T')[0];
+            // Ajuste para garantir data local
+            const now = new Date();
+            const hoje = now.getFullYear() + '-' + 
+                         String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                         String(now.getDate()).padStart(2, '0');
             
             // Verificar status atual
             const { data: presenca } = await _supabase
