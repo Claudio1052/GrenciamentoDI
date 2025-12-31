@@ -3,51 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dep. Infantil - Gestão Inteligente</title>
+    <title>Dep. Infantil - Gestão</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f3f4f6; font-family: sans-serif; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
         .sala-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
-        .sala-0-2 { background-color: #FECACA; color: #991B1B; } /* Vermelho */
-        .sala-3-5 { background-color: #FEF3C7; color: #92400E; } /* Amarelo */
-        .sala-6-8 { background-color: #D1FAE5; color: #065F46; } /* Verde */
-        .sala-9-12 { background-color: #DBEAFE; color: #1E40AF; } /* Azul */
-        .card { background: white; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        .sala-0-2 { background-color: #FECACA; color: #991B1B; } 
+        .sala-3-5 { background-color: #FEF3C7; color: #92400E; }
+        .sala-6-8 { background-color: #D1FAE5; color: #065F46; }
+        .sala-9-12 { background-color: #DBEAFE; color: #1E40AF; }
+        
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        
+        /* Correção para inputs */
+        input, select { border: 1px solid #ccc; padding: 8px; border-radius: 5px; width: 100%; }
+        button { cursor: pointer; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
     <header class="bg-indigo-600 text-white p-4 shadow-lg flex justify-between items-center z-10">
         <h1 class="text-xl font-bold"><i class="fa-solid fa-shapes"></i> Kids System</h1>
-        <div class="text-sm font-bold" id="status-connection">Conectando...</div>
+        <div id="status-connection" class="text-sm font-bold bg-indigo-800 px-3 py-1 rounded">Verificando...</div>
     </header>
 
     <div class="flex flex-1 overflow-hidden">
         <nav class="w-20 md:w-64 bg-white shadow-md flex flex-col justify-between">
             <div class="flex flex-col py-4 space-y-2">
-                <button onclick="showTab('dashboard')" class="p-3 hover:bg-indigo-50 text-indigo-700 font-medium text-left flex items-center">
-                    <i class="fa-solid fa-chart-pie w-8 text-center"></i> <span class="hidden md:inline">Dashboard</span>
+                <button onclick="showTab('dashboard')" class="p-4 hover:bg-indigo-50 text-indigo-700 font-medium text-left">
+                    <i class="fa-solid fa-chart-pie w-6"></i> <span class="hidden md:inline ml-2">Dashboard</span>
                 </button>
-                <button onclick="showTab('professores')" class="p-3 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-medium text-left flex items-center">
-                    <i class="fa-solid fa-chalkboard-user w-8 text-center"></i> <span class="hidden md:inline">Professores</span>
+                <button onclick="showTab('professores')" class="p-4 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-medium text-left">
+                    <i class="fa-solid fa-chalkboard-user w-6"></i> <span class="hidden md:inline ml-2">Professores</span>
                 </button>
-                <button onclick="showTab('escala')" class="p-3 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-medium text-left flex items-center">
-                    <i class="fa-solid fa-calendar-days w-8 text-center"></i> <span class="hidden md:inline">Escala</span>
+                <button onclick="showTab('escala')" class="p-4 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-medium text-left">
+                    <i class="fa-solid fa-calendar-days w-6"></i> <span class="hidden md:inline ml-2">Escala</span>
                 </button>
-                <button onclick="showTab('criancas')" class="p-3 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-medium text-left flex items-center">
-                    <i class="fa-solid fa-child w-8 text-center"></i> <span class="hidden md:inline">Crianças & QR</span>
+                <button onclick="showTab('criancas')" class="p-4 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-medium text-left">
+                    <i class="fa-solid fa-child w-6"></i> <span class="hidden md:inline ml-2">Crianças</span>
                 </button>
-                <button onclick="showTab('checkin')" class="p-3 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-medium text-left flex items-center">
-                    <i class="fa-solid fa-qrcode w-8 text-center"></i> <span class="hidden md:inline">Check-in/Out</span>
+                <button onclick="showTab('checkin')" class="p-4 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-medium text-left">
+                    <i class="fa-solid fa-qrcode w-6"></i> <span class="hidden md:inline ml-2">Check-in</span>
                 </button>
             </div>
         </nav>
@@ -55,153 +61,84 @@
         <main class="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
             
             <div id="dashboard" class="tab-content active">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Visão Geral do Departamento</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Dashboard</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     <div class="card border-l-4 border-indigo-500">
-                        <div class="text-gray-500 text-sm">Crianças Presentes Hoje</div>
-                        <div class="text-3xl font-bold text-indigo-600" id="dash-presentes">0</div>
+                        <div class="text-gray-500 text-sm">Crianças Presentes</div>
+                        <div class="text-3xl font-bold text-indigo-600" id="dash-presentes">-</div>
                     </div>
                     <div class="card border-l-4 border-green-500">
                         <div class="text-gray-500 text-sm">Total Cadastrados</div>
-                        <div class="text-3xl font-bold text-green-600" id="dash-total">0</div>
+                        <div class="text-3xl font-bold text-green-600" id="dash-total">-</div>
                     </div>
                     <div class="card border-l-4 border-yellow-500">
                         <div class="text-gray-500 text-sm">Escalados Hoje</div>
-                        <div class="text-3xl font-bold text-yellow-600" id="dash-professores">0</div>
+                        <div class="text-3xl font-bold text-yellow-600" id="dash-professores">-</div>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="card">
-                        <h3 class="font-bold mb-4">Presença por Sala (Hoje)</h3>
-                        <canvas id="chartPresenca"></canvas>
-                    </div>
-                    <div class="card">
-                        <h3 class="font-bold mb-4">Professores Escalados Hoje</h3>
-                        <div id="lista-professores-hoje" class="space-y-2">
-                            </div>
-                    </div>
+                <div class="card">
+                    <h3 class="font-bold mb-4">Gráfico de Presença (Hoje)</h3>
+                    <div style="height: 300px;"><canvas id="chartPresenca"></canvas></div>
                 </div>
             </div>
 
             <div id="professores" class="tab-content">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Gerenciamento de Professores</h2>
-                    <button onclick="openModalProfessor()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
-                        <i class="fa-solid fa-plus"></i> Novo Professor
+                    <h2 class="text-2xl font-bold">Professores</h2>
+                    <button onclick="openModal('modal-professor')" class="bg-indigo-600 text-white px-4 py-2 rounded shadow">
+                        + Novo
                     </button>
                 </div>
-                
                 <div class="bg-white rounded-lg shadow overflow-hidden">
-                    <table class="min-w-full leading-normal">
-                        <thead>
-                            <tr>
-                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nome</th>
-                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Sala Preferência</th>
-                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-professores">
-                            </tbody>
-                    </table>
+                    <table class="min-w-full"><tbody id="tabela-professores"></tbody></table>
                 </div>
             </div>
 
             <div id="escala" class="tab-content">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Escala de Professores</h2>
-                
+                <h2 class="text-2xl font-bold mb-6">Escala</h2>
                 <div class="card max-w-2xl mx-auto">
-                    <form id="form-escala" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Data do Culto</label>
-                            <input type="date" id="escala-data" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Sala</label>
-                            <select id="escala-sala" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
-                                <option value="0 a 2">0 a 2 anos (Berçário)</option>
-                                <option value="3 a 5">3 a 5 anos (Maternal)</option>
-                                <option value="6 a 8">6 a 8 anos (Primário)</option>
-                                <option value="9 a 12">9 a 12 anos (Juniores)</option>
-                            </select>
-                        </div>
+                    <label class="block mb-2 font-bold">Data</label>
+                    <input type="date" id="escala-data" class="mb-4">
+                    
+                    <label class="block mb-2 font-bold">Sala</label>
+                    <select id="escala-sala" class="mb-4">
+                        <option value="0 a 2">0 a 2 anos</option>
+                        <option value="3 a 5">3 a 5 anos</option>
+                        <option value="6 a 8">6 a 8 anos</option>
+                        <option value="9 a 12">9 a 12 anos</option>
+                    </select>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Selecione os Professores (Múltipla Escolha)</label>
-                            <div id="lista-selecao-professores" class="grid grid-cols-2 gap-2 h-40 overflow-y-auto p-2 border rounded bg-gray-50">
-                                </div>
-                        </div>
+                    <label class="block mb-2 font-bold">Professores</label>
+                    <div id="lista-selecao-professores" class="grid grid-cols-2 gap-2 p-2 border rounded bg-gray-50 mb-4 h-32 overflow-y-auto"></div>
 
-                        <button type="button" onclick="salvarEscala()" class="w-full bg-green-600 text-white p-3 rounded hover:bg-green-700 font-bold">
-                            Salvar Escala
-                        </button>
-                    </form>
+                    <button onclick="salvarEscala()" class="w-full bg-green-600 text-white p-3 rounded font-bold hover:bg-green-700">Salvar Escala</button>
                 </div>
-
-                <div class="mt-8">
-                    <h3 class="font-bold text-lg mb-4">Escalas Recentes</h3>
-                    <div id="lista-escalas" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
-                </div>
+                <div id="lista-escalas" class="grid gap-4 md:grid-cols-2 mt-8"></div>
             </div>
 
             <div id="criancas" class="tab-content">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Cadastro de Crianças</h2>
-                    <button onclick="openModalCrianca()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
-                        <i class="fa-solid fa-plus"></i> Nova Criança
-                    </button>
+                    <h2 class="text-2xl font-bold">Crianças</h2>
+                    <button onclick="openModal('modal-crianca')" class="bg-indigo-600 text-white px-4 py-2 rounded shadow">+ Nova</button>
                 </div>
-
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 bg-white rounded-lg shadow overflow-x-auto">
-                        <table class="min-w-full">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="px-4 py-2 text-left">Nome</th>
-                                    <th class="px-4 py-2 text-left">Idade</th>
-                                    <th class="px-4 py-2 text-left">Sala</th>
-                                    <th class="px-4 py-2 text-right">QR Code</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabela-criancas"></tbody>
-                        </table>
+                    <div class="lg:col-span-2 bg-white rounded shadow p-4 overflow-x-auto">
+                        <table class="w-full text-left"><tbody id="tabela-criancas"></tbody></table>
                     </div>
-                    
-                    <div class="card flex flex-col items-center justify-center text-center">
-                        <h3 class="font-bold mb-2 text-gray-600">QR Code da Criança</h3>
-                        <div id="qrcode-display" class="bg-gray-100 w-48 h-48 flex items-center justify-center mb-4">
-                            <span class="text-xs text-gray-400">Selecione uma criança</span>
-                        </div>
+                    <div class="card flex flex-col items-center text-center">
+                        <h3 class="font-bold text-gray-600">QR Code</h3>
+                        <div id="qrcode-display" class="my-4"></div>
                         <p id="qrcode-nome" class="font-bold text-indigo-600"></p>
-                        <p id="qrcode-sala" class="text-sm text-gray-500"></p>
-                        <button class="mt-4 text-sm text-indigo-500 hover:underline" onclick="window.print()">Imprimir</button>
                     </div>
                 </div>
             </div>
 
             <div id="checkin" class="tab-content">
-                <div class="max-w-md mx-auto mt-10">
-                    <div class="bg-white p-8 rounded-xl shadow-2xl text-center">
-                        <div class="mb-6">
-                            <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto text-indigo-600">
-                                <i class="fa-solid fa-camera fa-2x"></i>
-                            </div>
-                            <h2 class="text-2xl font-bold mt-4">Scanner de Check-in/Out</h2>
-                            <p class="text-gray-500 text-sm">Use o leitor ou digite o código</p>
-                        </div>
-
-                        <div class="mb-4">
-                            <input type="text" id="scanner-input" placeholder="Clique aqui e leia o QR Code..." 
-                                class="w-full text-center p-4 text-lg border-2 border-indigo-200 rounded-lg focus:outline-none focus:border-indigo-600" autofocus>
-                        </div>
-
-                        <div id="scan-result" class="hidden p-4 rounded-lg mb-4">
-                            </div>
-                        
-                        <p class="text-xs text-gray-400 mt-4">O sistema detecta automaticamente se é Entrada ou Saída.</p>
-                    </div>
+                <div class="max-w-md mx-auto mt-10 card text-center">
+                    <i class="fa-solid fa-camera fa-3x text-indigo-600 mb-4"></i>
+                    <h2 class="text-2xl font-bold">Scanner</h2>
+                    <input type="text" id="scanner-input" placeholder="Clique aqui e leia o QR..." class="my-4 text-center text-lg p-3 border-2 border-indigo-200" autofocus>
+                    <div id="scan-result" class="hidden p-4 rounded mt-4"></div>
                 </div>
             </div>
 
@@ -209,423 +146,266 @@
     </div>
 
     <div id="modal-professor" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg w-96">
-            <h3 class="text-xl font-bold mb-4">Professor</h3>
-            <input type="hidden" id="prof-id">
-            <input type="text" id="prof-nome" placeholder="Nome Completo" class="w-full border p-2 mb-3 rounded">
-            <select id="prof-sala" class="w-full border p-2 mb-4 rounded">
+        <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+            <h3 class="text-xl font-bold mb-4">Novo Professor</h3>
+            <input type="text" id="prof-nome" placeholder="Nome" class="mb-2">
+            <select id="prof-sala" class="mb-4">
                 <option value="0 a 2">0 a 2 anos</option>
                 <option value="3 a 5">3 a 5 anos</option>
                 <option value="6 a 8">6 a 8 anos</option>
                 <option value="9 a 12">9 a 12 anos</option>
             </select>
             <div class="flex justify-end gap-2">
-                <button onclick="closeModal('modal-professor')" class="px-4 py-2 bg-gray-200 rounded">Cancelar</button>
-                <button onclick="saveProfessor()" class="px-4 py-2 bg-indigo-600 text-white rounded">Salvar</button>
+                <button onclick="closeModal('modal-professor')" class="bg-gray-300 px-4 py-2 rounded">Cancelar</button>
+                <button onclick="saveProfessor()" class="bg-indigo-600 text-white px-4 py-2 rounded">Salvar</button>
             </div>
         </div>
     </div>
 
     <div id="modal-crianca" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg w-96">
-            <h3 class="text-xl font-bold mb-4">Cadastro de Criança</h3>
-            <input type="text" id="crianca-nome" placeholder="Nome da Criança" class="w-full border p-2 mb-3 rounded">
-            <input type="number" id="crianca-idade" placeholder="Idade" class="w-full border p-2 mb-3 rounded" onchange="calcSala()">
-            <input type="text" id="crianca-sala" placeholder="Sala (Automático)" class="w-full border p-2 mb-3 rounded bg-gray-100" readonly>
-            <input type="text" id="crianca-resp" placeholder="Nome Responsável" class="w-full border p-2 mb-3 rounded">
+        <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+            <h3 class="text-xl font-bold mb-4">Nova Criança</h3>
+            <input type="text" id="crianca-nome" placeholder="Nome" class="mb-2">
+            <input type="number" id="crianca-idade" placeholder="Idade" class="mb-2" onchange="calcSala()">
+            <input type="text" id="crianca-sala" placeholder="Sala" class="mb-2 bg-gray-100" readonly>
+            <input type="text" id="crianca-resp" placeholder="Responsável" class="mb-4">
             <div class="flex justify-end gap-2">
-                <button onclick="closeModal('modal-crianca')" class="px-4 py-2 bg-gray-200 rounded">Cancelar</button>
-                <button onclick="saveCrianca()" class="px-4 py-2 bg-indigo-600 text-white rounded">Salvar & Gerar QR</button>
+                <button onclick="closeModal('modal-crianca')" class="bg-gray-300 px-4 py-2 rounded">Cancelar</button>
+                <button onclick="saveCrianca()" class="bg-indigo-600 text-white px-4 py-2 rounded">Salvar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO SUPABASE ---
-        // !!! ATENÇÃO: SUBSTITUA APENAS AS DUAS LINHAS ABAIXO !!!
+        // ==========================================
+        // ÁREA DE CONFIGURAÇÃO (EDITE AQUI!!!)
+        // ==========================================
         
-        const SUPABASE_URL = 'https://SEU_PROJETO.supabase.co'; // <--- COLOCAR SUA URL
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc'; // <--- COLOCAR SUA CHAVE ANON PUBLICA GIGANTE AQUI
+        // 1. Apague o texto entre aspas e coloque a URL do seu Supabase (ex: https://abcedf.supabase.co)
+        const SUPABASE_URL = 'https://nekbbkenxcukoortusge.supabase.co'; 
         
-        // -----------------------------------------------------
+        // 2. Apague o texto entre aspas e coloque a chave "anon" "public"
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc'; 
+        
+        // ==========================================
 
         let supabase;
 
-        // Inicialização
-        try {
-            if (!SUPABASE_KEY.startsWith('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc')) {
-                console.warn("A chave Supabase parece incorreta. Verifique se copiou a chave 'anon' 'public'.");
-                document.getElementById('status-connection').innerText = 'Chave Inválida';
-                document.getElementById('status-connection').classList.add('text-red-500');
+        // INICIALIZAÇÃO
+        window.onload = function() {
+            if (SUPABASE_URL.includes('SEU_PROJETO') || SUPABASE_KEY.includes('SUA_CHAVE')) {
+                alert("PARE! Você não configurou as chaves no código HTML. Edite o arquivo e coloque seus dados nas linhas 250 e 253.");
+                document.getElementById('status-connection').innerText = 'Falta Configuração';
+                document.getElementById('status-connection').classList.add('bg-red-500');
+                return;
             }
-            
-            supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            
-            // Teste simples de conexão
-            supabase.from('professores').select('count', { count: 'exact', head: true }).then(({ error }) => {
-                if(error) {
-                    console.error("Erro ao conectar:", error);
-                    document.getElementById('status-connection').innerText = 'Erro Conexão';
-                    document.getElementById('status-connection').classList.add('text-red-300');
-                } else {
-                    document.getElementById('status-connection').innerText = 'Conectado';
-                    document.getElementById('status-connection').classList.add('text-green-300');
-                    loadDashboard(); // Carrega dados se conectar
-                }
-            });
 
-        } catch (e) {
-            console.error("Erro Inicialização", e);
-            document.getElementById('status-connection').innerText = 'Erro';
+            try {
+                supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                checkConnection();
+            } catch (error) {
+                console.error("Erro crítico:", error);
+                alert("Erro ao iniciar Supabase. Verifique o console (F12).");
+            }
+        };
+
+        async function checkConnection() {
+            const statusDiv = document.getElementById('status-connection');
+            // Tenta buscar algo simples
+            const { error } = await supabase.from('professores').select('count', { count: 'exact', head: true });
+            
+            if (error) {
+                console.error("Erro de Conexão:", error);
+                statusDiv.innerText = 'Erro: ' + error.message;
+                statusDiv.classList.add('bg-red-600');
+                if(error.code === 'PGRST301') alert("As tabelas não existem ou você não tem permissão (RLS). Rode o script SQL enviado.");
+            } else {
+                statusDiv.innerText = 'Online';
+                statusDiv.classList.remove('bg-indigo-800');
+                statusDiv.classList.add('bg-green-500');
+                loadDashboard();
+            }
         }
 
-        // --- NAVEGAÇÃO ---
-        function showTab(tabId) {
+        // NAVEGAÇÃO
+        function showTab(id) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            if(tabId === 'dashboard') loadDashboard();
-            if(tabId === 'professores') loadProfessores();
-            if(tabId === 'escala') loadEscalaUI();
-            if(tabId === 'criancas') loadCriancas();
+            document.getElementById(id).classList.add('active');
+            if(id === 'dashboard') loadDashboard();
+            if(id === 'professores') loadProfessores();
+            if(id === 'escala') loadEscalaUI();
+            if(id === 'criancas') loadCriancas();
         }
 
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
-        function openModalProfessor() { 
-            document.getElementById('prof-id').value = '';
-            document.getElementById('prof-nome').value = '';
-            document.getElementById('modal-professor').classList.remove('hidden'); 
-            document.getElementById('modal-professor').classList.add('flex'); 
-        }
-        function openModalCrianca() { 
-            document.getElementById('crianca-nome').value = '';
-            document.getElementById('crianca-idade').value = '';
-            document.getElementById('crianca-sala').value = '';
-            document.getElementById('modal-crianca').classList.remove('hidden'); 
-            document.getElementById('modal-crianca').classList.add('flex'); 
-        }
 
-        // --- LÓGICA DE SALAS ---
-        function getSalaPorIdade(idade) {
+        // UTILITÁRIOS
+        function getSala(idade) {
             if (idade <= 2) return "0 a 2";
             if (idade <= 5) return "3 a 5";
             if (idade <= 8) return "6 a 8";
             if (idade <= 12) return "9 a 12";
             return "Indefinido";
         }
-
-        function calcSala() {
-            const idade = document.getElementById('crianca-idade').value;
-            document.getElementById('crianca-sala').value = getSalaPorIdade(idade);
+        function calcSala() { document.getElementById('crianca-sala').value = getSala(document.getElementById('crianca-idade').value); }
+        function getSalaBadge(sala) {
+            let color = 'bg-gray-200';
+            if(sala.includes('0 a 2')) color = 'sala-0-2';
+            if(sala.includes('3 a 5')) color = 'sala-3-5';
+            if(sala.includes('6 a 8')) color = 'sala-6-8';
+            if(sala.includes('9 a 12')) color = 'sala-9-12';
+            return `<span class="sala-badge ${color}">${sala}</span>`;
         }
 
-        function getSalaColor(sala) {
-            if(sala.includes('0 a 2')) return 'sala-0-2';
-            if(sala.includes('3 a 5')) return 'sala-3-5';
-            if(sala.includes('6 a 8')) return 'sala-6-8';
-            if(sala.includes('9 a 12')) return 'sala-9-12';
-            return 'bg-gray-200';
-        }
-
-        // --- PROFESSORES ---
+        // LÓGICA: PROFESSORES
         async function loadProfessores() {
             const { data, error } = await supabase.from('professores').select('*');
-            if (error) { console.error(error); return; }
-            
-            const tbody = document.getElementById('tabela-professores');
-            tbody.innerHTML = '';
-            data.forEach(prof => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-bold">${prof.nome}</td>
-                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                            <span class="sala-badge ${getSalaColor(prof.sala_preferencia)}">${prof.sala_preferencia}</span>
-                        </td>
-                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
-                            <button onclick="deleteProfessor(${prof.id})" class="text-red-600 hover:text-red-900">Excluir</button>
-                        </td>
-                    </tr>
-                `;
-            });
+            if(error) return console.error(error);
+            document.getElementById('tabela-professores').innerHTML = data.map(p => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 font-bold">${p.nome}</td>
+                    <td class="p-3">${getSalaBadge(p.sala_preferencia)}</td>
+                    <td class="p-3 text-right"><button onclick="delProf(${p.id})" class="text-red-500 hover:underline">Excluir</button></td>
+                </tr>
+            `).join('');
         }
-
         async function saveProfessor() {
             const nome = document.getElementById('prof-nome').value;
             const sala = document.getElementById('prof-sala').value;
-            
+            if(!nome) return alert('Nome obrigatório');
             await supabase.from('professores').insert([{ nome, sala_preferencia: sala }]);
-            closeModal('modal-professor');
-            loadProfessores();
+            closeModal('modal-professor'); loadProfessores();
+        }
+        async function delProf(id) {
+            if(confirm('Excluir?')) { await supabase.from('professores').delete().eq('id', id); loadProfessores(); }
         }
 
-        async function deleteProfessor(id) {
-            if(confirm('Tem certeza?')) {
-                await supabase.from('professores').delete().match({ id });
-                loadProfessores();
-            }
-        }
-
-        // --- ESCALA (escala2) ---
-        async function loadEscalaUI() {
-            const { data: profs } = await supabase.from('professores').select('*');
-            const container = document.getElementById('lista-selecao-professores');
-            container.innerHTML = '';
-            if(profs) {
-                profs.forEach(p => {
-                    container.innerHTML += `
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" name="prof-check" value="${p.nome}" class="rounded text-indigo-600">
-                            <span class="text-sm">${p.nome} <span class="text-xs text-gray-400">(${p.sala_preferencia})</span></span>
-                        </label>
-                    `;
-                });
-            }
-            loadEscalasSalvas();
-        }
-
-        async function salvarEscala() {
-            const dataCulto = document.getElementById('escala-data').value;
-            const sala = document.getElementById('escala-sala').value;
-            
-            const checkboxes = document.querySelectorAll('input[name="prof-check"]:checked');
-            const professoresSelecionados = Array.from(checkboxes).map(cb => cb.value);
-
-            if(!dataCulto || professoresSelecionados.length === 0) return alert("Preencha a data e selecione professores");
-
-            const { error } = await supabase.from('escala2').insert([{
-                data_culto: dataCulto,
-                sala: sala,
-                professores_ids: JSON.stringify(professoresSelecionados) // Convertendo para JSON
-            }]);
-
-            if(error) { console.error(error); alert('Erro ao salvar escala: ' + error.message); }
-            else {
-                alert('Escala Salva!');
-                loadEscalasSalvas();
-            }
-        }
-
-        async function loadEscalasSalvas() {
-            const { data } = await supabase.from('escala2')
-                .select('*')
-                .order('data_culto', { ascending: false })
-                .limit(10);
-                
-            const div = document.getElementById('lista-escalas');
-            div.innerHTML = '';
-            
-            if(data) {
-                data.forEach(e => {
-                    let profs = [];
-                    // Tratamento seguro do JSONB
-                    if (typeof e.professores_ids === 'string') {
-                        try { profs = JSON.parse(e.professores_ids); } catch(err){ profs = [e.professores_ids]; }
-                    } else {
-                        profs = e.professores_ids;
-                    }
-                    
-                    div.innerHTML += `
-                        <div class="card border-t-4 border-indigo-500">
-                            <div class="font-bold text-gray-800">${new Date(e.data_culto).toLocaleDateString('pt-BR')}</div>
-                            <span class="sala-badge ${getSalaColor(e.sala)} block w-max my-2">${e.sala}</span>
-                            <div class="text-sm text-gray-600 mt-2">Professores: <br><b>${Array.isArray(profs) ? profs.join(', ') : profs}</b></div>
-                        </div>
-                    `;
-                });
-            }
-        }
-
-        // --- CRIANÇAS & QR CODE ---
+        // LÓGICA: CRIANÇAS
         async function loadCriancas() {
             const { data } = await supabase.from('criancas').select('*');
-            const tbody = document.getElementById('tabela-criancas');
-            tbody.innerHTML = '';
-            
-            if(data) {
-                data.forEach(c => {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="showQRCode('${c.nome}', '${c.sala}', '${c.qrcode_hash}')">
-                            <td class="px-4 py-2 border-b">${c.nome}</td>
-                            <td class="px-4 py-2 border-b">${c.idade}</td>
-                            <td class="px-4 py-2 border-b"><span class="sala-badge ${getSalaColor(c.sala)}">${c.sala}</span></td>
-                            <td class="px-4 py-2 border-b text-right"><i class="fa-solid fa-qrcode text-indigo-600"></i></td>
-                        </tr>
-                    `;
-                });
-            }
+            document.getElementById('tabela-criancas').innerHTML = data.map(c => `
+                <tr class="border-b hover:bg-indigo-50 cursor-pointer" onclick="verQR('${c.nome}', '${c.sala}', '${c.qrcode_hash}')">
+                    <td class="p-3">${c.nome}</td>
+                    <td class="p-3">${c.idade} anos</td>
+                    <td class="p-3">${getSalaBadge(c.sala)}</td>
+                </tr>
+            `).join('');
         }
-
         async function saveCrianca() {
             const nome = document.getElementById('crianca-nome').value;
             const idade = document.getElementById('crianca-idade').value;
-            const sala = getSalaPorIdade(idade);
-            const resp = document.getElementById('crianca-resp').value;
-
-            const { error } = await supabase.from('criancas').insert([{
-                nome, idade, sala, nome_responsavel: resp
-            }]);
-
-            if(error) alert('Erro ao salvar');
-            else {
-                closeModal('modal-crianca');
-                loadCriancas();
-            }
+            if(!nome || !idade) return alert('Preencha tudo');
+            await supabase.from('criancas').insert([{ nome, idade, sala: getSala(idade), nome_responsavel: document.getElementById('crianca-resp').value }]);
+            closeModal('modal-crianca'); loadCriancas();
         }
-
-        function showQRCode(nome, sala, hash) {
+        function verQR(nome, sala, hash) {
             document.getElementById('qrcode-display').innerHTML = '';
             document.getElementById('qrcode-nome').innerText = nome;
-            document.getElementById('qrcode-sala').innerText = sala;
-            
-            new QRCode(document.getElementById("qrcode-display"), {
-                text: hash,
-                width: 128,
-                height: 128,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
+            new QRCode(document.getElementById("qrcode-display"), { text: hash, width: 128, height: 128 });
         }
 
-        // --- CHECK-IN / CHECK-OUT LOGIC ---
-        const scannerInput = document.getElementById('scanner-input');
-        let timeout = null;
+        // LÓGICA: ESCALA
+        async function loadEscalaUI() {
+            const { data } = await supabase.from('professores').select('*');
+            document.getElementById('lista-selecao-professores').innerHTML = data.map(p => `
+                <label class="flex items-center space-x-2 bg-white p-2 rounded border">
+                    <input type="checkbox" value="${p.nome}"> <span>${p.nome}</span>
+                </label>
+            `).join('');
+            
+            const { data: escalas } = await supabase.from('escala2').select('*').order('data_culto', {ascending:false}).limit(6);
+            document.getElementById('lista-escalas').innerHTML = escalas.map(e => {
+                let profs = e.professores_ids;
+                try { if(typeof profs === 'string') profs = JSON.parse(profs); } catch(err){}
+                return `
+                <div class="card border-l-4 border-indigo-400">
+                    <div class="font-bold">${new Date(e.data_culto).toLocaleDateString()}</div>
+                    <div class="mb-2">${getSalaBadge(e.sala)}</div>
+                    <div class="text-sm text-gray-600">${Array.isArray(profs) ? profs.join(', ') : profs}</div>
+                </div>`;
+            }).join('');
+        }
+        async function salvarEscala() {
+            const data = document.getElementById('escala-data').value;
+            const sala = document.getElementById('escala-sala').value;
+            const profs = Array.from(document.querySelectorAll('#lista-selecao-professores input:checked')).map(cb => cb.value);
+            if(!data || profs.length === 0) return alert('Data e Professores obrigatórios');
+            
+            await supabase.from('escala2').insert([{ data_culto: data, sala, professores_ids: JSON.stringify(profs) }]);
+            alert('Salvo!'); loadEscalaUI();
+        }
 
-        scannerInput.addEventListener('input', function(e) {
+        // LÓGICA: SCANNER
+        let timeout;
+        document.getElementById('scanner-input').addEventListener('input', (e) => {
             clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                processarCheckin(e.target.value);
-                e.target.value = ''; 
-            }, 500);
+            timeout = setTimeout(() => processCheckin(e.target.value), 500);
         });
 
-        async function processarCheckin(hash) {
+        async function processCheckin(hash) {
             if(!hash) return;
-            const resultDiv = document.getElementById('scan-result');
-            resultDiv.innerHTML = '<p class="text-blue-500">Processando...</p>';
-            resultDiv.classList.remove('hidden');
+            const res = document.getElementById('scan-result');
+            document.getElementById('scanner-input').value = '';
             
-            const { data: crianca, error } = await supabase.from('criancas').select('*').eq('qrcode_hash', hash).single();
-            
-            if(!crianca || error) {
-                resultDiv.innerHTML = `<div class="bg-red-100 text-red-700 p-2 rounded">QR Code não encontrado! Cadastre a criança primeiro.</div>`;
-                return;
-            }
+            const { data: c } = await supabase.from('criancas').select('*').eq('qrcode_hash', hash).single();
+            if(!c) { res.className = 'bg-red-100 text-red-800 p-4 block'; res.innerText = 'QR Code não encontrado'; return; }
 
             const hoje = new Date().toISOString().split('T')[0];
+            const { data: p } = await supabase.from('presenca').select('*').eq('crianca_id', c.id).eq('data_culto', hoje).single();
 
-            const { data: presenca } = await supabase.from('presenca')
-                .select('*')
-                .eq('crianca_id', crianca.id)
-                .eq('data_culto', hoje)
-                .single();
-
-            if (!presenca) {
-                await supabase.from('presenca').insert([{
-                    crianca_id: crianca.id,
-                    data_culto: hoje,
-                    checkin: new Date().toISOString(),
-                    status: 'presente'
-                }]);
-                
-                resultDiv.innerHTML = `
-                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4">
-                        <p class="font-bold">BEM-VINDO(A)!</p>
-                        <p>Criança: ${crianca.nome}</p>
-                        <p>Sala: ${crianca.sala}</p>
-                        <p class="text-xs mt-2">Check-in realizado com sucesso.</p>
-                    </div>`;
+            if(!p) {
+                await supabase.from('presenca').insert([{ crianca_id: c.id, data_culto: hoje, checkin: new Date().toISOString() }]);
+                res.className = 'bg-green-100 text-green-800 p-4 block';
+                res.innerHTML = `<b>Entrada:</b> ${c.nome} (${c.sala})`;
+            } else if(!p.checkout) {
+                await supabase.from('presenca').update({ checkout: new Date().toISOString() }).eq('id', p.id);
+                res.className = 'bg-blue-100 text-blue-800 p-4 block';
+                res.innerHTML = `<b>Saída:</b> ${c.nome}`;
             } else {
-                if(presenca.checkout) {
-                     resultDiv.innerHTML = `<div class="bg-yellow-100 text-yellow-700 p-2 rounded">Esta criança já saiu hoje.</div>`;
-                } else {
-                    await supabase.from('presenca')
-                        .update({ checkout: new Date().toISOString(), status: 'finalizado' })
-                        .eq('id', presenca.id);
-
-                    resultDiv.innerHTML = `
-                        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4">
-                            <p class="font-bold">SAÍDA CONFIRMADA</p>
-                            <p>Criança: ${crianca.nome}</p>
-                            <p class="text-xs mt-2">Check-out realizado. Entregar ao responsável.</p>
-                        </div>`;
-                }
+                res.className = 'bg-yellow-100 text-yellow-800 p-4 block';
+                res.innerText = 'Já finalizado hoje.';
             }
+            loadDashboard(); // Atualiza contadores
         }
 
-        // --- DASHBOARD ---
-        let chartInstance = null;
-
+        // LÓGICA: DASHBOARD
+        let myChart;
         async function loadDashboard() {
             const hoje = new Date().toISOString().split('T')[0];
-
-            // Buscar contagens
-            const { count: totalCriancas } = await supabase.from('criancas').select('*', { count: 'exact', head: true });
             
-            const { count: presentes } = await supabase.from('presenca')
-                .select('*', { count: 'exact', head: true })
-                .eq('data_culto', hoje)
-                .is('checkout', null);
-
-            const { data: escalas } = await supabase.from('escala2').select('*').eq('data_culto', hoje);
+            // 1. Contadores
+            const { count: total } = await supabase.from('criancas').select('*', { count: 'exact', head: true });
+            const { count: presentes } = await supabase.from('presenca').select('*', { count: 'exact', head: true }).eq('data_culto', hoje).is('checkout', null);
+            
+            // 2. Professores Escalados (Lógica manual pois JSONB varia)
+            const { data: escalas } = await supabase.from('escala2').select('professores_ids').eq('data_culto', hoje);
             let totalProfs = 0;
-            let listaProfsHtml = '';
-            
-            if(escalas) {
-                escalas.forEach(e => {
-                    let profs = [];
-                    // Parse seguro
-                    try {
-                        profs = (typeof e.professores_ids === 'string') ? JSON.parse(e.professores_ids) : e.professores_ids;
-                        if (!Array.isArray(profs)) profs = [profs];
-                    } catch(err) { profs = []; }
+            escalas.forEach(e => {
+                try { 
+                    let lista = (typeof e.professores_ids === 'string') ? JSON.parse(e.professores_ids) : e.professores_ids;
+                    if(Array.isArray(lista)) totalProfs += lista.length;
+                } catch(err){}
+            });
 
-                    totalProfs += profs.length;
-                    listaProfsHtml += `<div class="flex justify-between border-b pb-1"><span>${e.sala}</span> <span class="font-bold">${profs.join(', ')}</span></div>`;
-                });
-            }
-
-            document.getElementById('dash-total').innerText = totalCriancas || 0;
+            document.getElementById('dash-total').innerText = total || 0;
             document.getElementById('dash-presentes').innerText = presentes || 0;
-            document.getElementById('dash-professores').innerText = totalProfs || 0;
-            document.getElementById('lista-professores-hoje').innerHTML = listaProfsHtml || '<p class="text-gray-400">Ninguém escalado hoje</p>';
+            document.getElementById('dash-professores').innerText = totalProfs;
 
-            // Gráfico
-            const { data: presencasAtivas } = await supabase
-                .from('presenca')
-                .select('crianca_id, criancas(sala)')
-                .eq('data_culto', hoje)
-                .is('checkout', null);
-
+            // 3. Gráfico
+            const { data: pList } = await supabase.from('presenca').select('criancas(sala)').eq('data_culto', hoje).is('checkout', null);
             const counts = { '0 a 2': 0, '3 a 5': 0, '6 a 8': 0, '9 a 12': 0 };
-            
-            if(presencasAtivas) {
-                presencasAtivas.forEach(p => {
-                    if(p.criancas && p.criancas.sala) {
-                        let s = p.criancas.sala;
-                        if(counts[s] !== undefined) counts[s]++;
-                    }
-                });
-            }
+            pList.forEach(item => { if(item.criancas && counts[item.criancas.sala] !== undefined) counts[item.criancas.sala]++; });
 
             const ctx = document.getElementById('chartPresenca').getContext('2d');
-            if(chartInstance) chartInstance.destroy();
-            
-            chartInstance = new Chart(ctx, {
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: Object.keys(counts),
-                    datasets: [{
-                        label: 'Crianças Presentes Agora',
-                        data: Object.values(counts),
-                        backgroundColor: ['#FECACA', '#FEF3C7', '#D1FAE5', '#DBEAFE'],
-                        borderColor: ['#991B1B', '#92400E', '#065F46', '#1E40AF'],
-                        borderWidth: 1
-                    }]
+                    datasets: [{ label: 'Crianças', data: Object.values(counts), backgroundColor: ['#FECACA', '#FEF3C7', '#D1FAE5', '#DBEAFE'] }]
                 },
-                options: {
-                    responsive: true,
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
     </script>
