@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Departamento Infantil - Gestão Completa</title>
+    <title>Departamento Infantil - Gestão Dinâmica</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -14,86 +14,86 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .scanner-box { width: 100%; max-width: 400px; margin: 0 auto; }
-        /* Scroll suave para listas */
         .kid-list { max-height: 200px; overflow-y: auto; }
+        /* Animação para feedback */
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(72, 187, 120, 0); } 100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); } }
+        .pulse-success { animation: pulse-green 1s infinite; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex flex-col">
 
-    <nav class="bg-indigo-600 text-white p-4 shadow-lg sticky top-0 z-50">
+    <nav class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold"><i class="fas fa-child"></i> Dept. Infantil</h1>
+            <h1 class="text-xl font-bold"><i class="fas fa-shapes"></i> Dept. Infantil</h1>
             <div class="space-x-2 text-sm hidden md:block">
-                <button onclick="showTab('dashboard')" class="hover:text-indigo-200 font-medium">Painel Hoje</button>
-                <button onclick="showTab('historico')" class="hover:text-indigo-200 font-medium">Histórico</button>
+                <button onclick="showTab('dashboard')" class="hover:text-indigo-200 font-medium">Painel</button>
+                <button onclick="showTab('historico')" class="hover:text-indigo-200 font-medium">Relatórios</button>
                 <button onclick="showTab('professores')" class="hover:text-indigo-200 font-medium">Professores</button>
                 <button onclick="showTab('escala')" class="hover:text-indigo-200 font-medium">Escala</button>
                 <button onclick="showTab('criancas')" class="hover:text-indigo-200 font-medium">Cadastro</button>
-                <button onclick="showTab('qrcode')" class="bg-white text-indigo-600 px-3 py-1 rounded-full font-bold">Check-in/Out</button>
+                <button onclick="showTab('checkin')" class="bg-white text-indigo-700 px-3 py-1 rounded-full font-bold shadow">Check-in/Out</button>
             </div>
         </div>
         <div class="flex justify-around md:hidden mt-2 text-xs overflow-x-auto py-2">
-            <button onclick="showTab('dashboard')" class="px-2">Hoje</button>
-            <button onclick="showTab('historico')" class="px-2">Histórico</button>
-            <button onclick="showTab('professores')" class="px-2">Profs</button>
+            <button onclick="showTab('dashboard')" class="px-2">Painel</button>
+            <button onclick="showTab('historico')" class="px-2">Hist</button>
             <button onclick="showTab('escala')" class="px-2">Escala</button>
-            <button onclick="showTab('criancas')" class="px-2">Cad.</button>
-            <button onclick="showTab('qrcode')" class="font-bold text-yellow-300 px-2">QR</button>
+            <button onclick="showTab('criancas')" class="px-2">Cad</button>
+            <button onclick="showTab('checkin')" class="font-bold text-yellow-300 px-2 bg-indigo-800 rounded">ENTRADA/SAÍDA</button>
         </div>
     </nav>
 
-    <main class="container mx-auto p-4 flex-grow overflow-y-auto pb-20">
+    <main class="container mx-auto p-4 flex-grow overflow-y-auto pb-24">
 
         <div id="dashboard" class="tab-content active">
             <div class="flex justify-between items-end mb-4">
-                <h2 class="text-2xl font-bold text-gray-800">Painel Ao Vivo (Hoje)</h2>
-                <button onclick="carregarDashboard()" class="text-indigo-600 text-sm"><i class="fas fa-sync"></i> Atualizar</button>
+                <h2 class="text-2xl font-bold text-gray-800">Painel Ao Vivo</h2>
+                <button onclick="carregarDashboard()" class="text-indigo-600 text-sm bg-white p-2 rounded shadow"><i class="fas fa-sync"></i> Atualizar</button>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-blue-600 text-white p-4 rounded-lg shadow">
-                    <h3 class="text-blue-100 text-sm">Total Crianças Presentes</h3>
-                    <p class="text-4xl font-bold" id="dash-total-kids">0</p>
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-lg">
+                    <h3 class="text-blue-100 text-sm font-semibold">Crianças Presentes Agora</h3>
+                    <p class="text-5xl font-bold mt-2" id="dash-total-kids">0</p>
                 </div>
             </div>
 
             <div id="painel-salas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            </div>
+                </div>
         </div>
 
         <div id="historico" class="tab-content">
-            <h2 class="text-2xl font-bold mb-4">Histórico / Relatório</h2>
+            <h2 class="text-2xl font-bold mb-4">Relatório de Presença</h2>
             <div class="bg-white p-4 rounded shadow mb-6 flex flex-col md:flex-row gap-4 items-end">
                 <div class="w-full">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Selecione a Data:</label>
-                    <input type="date" id="hist-data" class="border p-2 rounded w-full">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Data:</label>
+                    <input type="date" id="hist-data" class="border p-2 rounded w-full bg-gray-50">
                 </div>
-                <button onclick="buscarHistorico()" class="bg-indigo-600 text-white px-6 py-2 rounded w-full md:w-auto h-10">Buscar</button>
+                <button onclick="buscarHistorico()" class="bg-indigo-600 text-white px-6 py-2 rounded w-full md:w-auto h-10 shadow hover:bg-indigo-700">Buscar</button>
             </div>
-
             <div id="hist-resultado" class="space-y-6">
-                <p class="text-gray-500 text-center mt-10">Selecione uma data para ver o relatório completo.</p>
+                <p class="text-gray-500 text-center mt-10">Selecione uma data para ver o relatório.</p>
             </div>
         </div>
 
         <div id="professores" class="tab-content">
-            <h2 class="text-2xl font-bold mb-4">Professores</h2>
+            <h2 class="text-2xl font-bold mb-4">Cadastro de Professores</h2>
             <div class="bg-white p-4 rounded shadow mb-4">
                 <div class="flex flex-col md:flex-row gap-2">
-                    <input type="text" id="prof-nome" placeholder="Nome" class="border p-2 rounded flex-grow">
+                    <input type="text" id="prof-nome" placeholder="Nome do Professor" class="border p-2 rounded flex-grow">
                     <select id="prof-sala" class="border p-2 rounded">
-                        <option value="">Sala Preferência</option>
+                        <option value="">Preferência de Sala</option>
                         <option value="0-2">0-2 anos</option>
                         <option value="3-5">3-5 anos</option>
                         <option value="6-8">6-8 anos</option>
                         <option value="9-12">9-12 anos</option>
                     </select>
-                    <button onclick="addProfessor()" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+                    <button onclick="addProfessor()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700"><i class="fas fa-plus"></i> Add</button>
                 </div>
             </div>
             <div class="bg-white rounded shadow overflow-hidden">
                 <table class="w-full text-left">
-                    <thead class="bg-gray-100"><tr><th class="p-3">Nome</th><th class="p-3">Sala</th><th class="p-3">Excluir</th></tr></thead>
+                    <thead class="bg-gray-100"><tr><th class="p-3">Nome</th><th class="p-3">Sala Pref.</th><th class="p-3">Ação</th></tr></thead>
                     <tbody id="lista-professores"></tbody>
                 </table>
             </div>
@@ -101,9 +101,9 @@
 
         <div id="criancas" class="tab-content">
             <h2 class="text-2xl font-bold mb-4">Cadastro de Criança</h2>
-            <div class="bg-white p-6 rounded shadow mb-6">
+            <div class="bg-white p-6 rounded shadow mb-6 border-l-4 border-indigo-500">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="kid-nome" placeholder="Nome da Criança" class="border p-2 rounded w-full">
+                    <input type="text" id="kid-nome" placeholder="Nome Completo da Criança" class="border p-2 rounded w-full">
                     <input type="date" id="kid-nasc" class="border p-2 rounded w-full" title="Data Nascimento">
                     <input type="text" id="kid-resp" placeholder="Nome do Responsável" class="border p-2 rounded w-full">
                     <select id="kid-sala" class="border p-2 rounded w-full">
@@ -113,71 +113,132 @@
                         <option value="6-8">Fixar: 6 a 8 anos</option>
                         <option value="9-12">Fixar: 9 a 12 anos</option>
                     </select>
-                    <input type="text" id="kid-qr" placeholder="Número QR Code (Fixo)" class="border p-2 rounded w-full font-mono bg-yellow-50">
                 </div>
-                <button onclick="addCrianca()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded w-full font-bold">Salvar Cadastro</button>
+                <p class="text-xs text-gray-500 mt-2">* O QR Code será vinculado apenas no momento da entrada (pulseira reutilizável).</p>
+                <button onclick="addCrianca()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded w-full font-bold hover:bg-indigo-700 shadow">Salvar Cadastro</button>
             </div>
             
             <div class="bg-white p-4 rounded shadow">
-                <h3 class="font-bold mb-2 text-gray-600 border-b pb-2">Últimos Cadastros</h3>
+                <h3 class="font-bold mb-2 text-gray-600 border-b pb-2">Cadastrados Recentemente</h3>
                 <div id="lista-criancas" class="max-h-60 overflow-y-auto"></div>
             </div>
         </div>
 
         <div id="escala" class="tab-content">
             <h2 class="text-2xl font-bold mb-4">Escala de Professores</h2>
-            <div class="bg-white p-4 rounded shadow mb-4 border-l-4 border-orange-400">
-                <div class="grid grid-cols-1 gap-4">
-                    <div>
-                        <label class="font-bold block text-sm">Data do Culto:</label>
-                        <input type="date" id="escala-data" class="border p-2 rounded w-full">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="bg-white p-4 rounded shadow mb-4 border-l-4 border-orange-400">
+                        <h3 class="font-bold mb-3">Criar Nova Escala</h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase">Data do Culto</label>
+                                <input type="date" id="escala-data" class="border p-2 rounded w-full">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase">Sala</label>
+                                <select id="escala-sala" class="border p-2 rounded w-full">
+                                    <option value="0-2">0 a 2 anos</option>
+                                    <option value="3-5">3 a 5 anos</option>
+                                    <option value="6-8">6 a 8 anos</option>
+                                    <option value="9-12">9 a 12 anos</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Professores:</label>
+                                <div id="escala-prof-select" class="h-32 overflow-y-auto border p-2 rounded bg-gray-50 grid grid-cols-1 gap-2"></div>
+                            </div>
+                            <button onclick="salvarEscala()" class="bg-orange-500 text-white px-4 py-2 rounded font-bold hover:bg-orange-600 shadow">Salvar Escala</button>
+                        </div>
                     </div>
-                    <div>
-                        <label class="font-bold block text-sm">Sala:</label>
-                        <select id="escala-sala" class="border p-2 rounded w-full">
-                            <option value="0-2">0 a 2 anos</option>
-                            <option value="3-5">3 a 5 anos</option>
-                            <option value="6-8">6 a 8 anos</option>
-                            <option value="9-12">9 a 12 anos</option>
-                        </select>
+                </div>
+
+                <div>
+                    <div class="bg-white p-4 rounded shadow h-full">
+                        <div class="flex justify-between items-center mb-4 border-b pb-2">
+                            <h3 class="font-bold text-gray-700">Consultar Escala</h3>
+                        </div>
+                        <div class="mb-4">
+                            <label class="text-sm font-bold text-gray-600">Filtrar por Data:</label>
+                            <input type="date" id="filtro-escala-data" onchange="carregarEscalas(this.value)" class="border p-2 rounded w-full mt-1 bg-blue-50">
+                        </div>
+                        <div id="lista-escalas" class="space-y-3 max-h-96 overflow-y-auto">
+                            </div>
                     </div>
-                    <div>
-                        <p class="font-bold text-sm mb-1">Professores (Múltipla escolha):</p>
-                        <div id="escala-prof-select" class="h-32 overflow-y-auto border p-2 rounded bg-gray-50 grid grid-cols-2 gap-2"></div>
-                    </div>
-                    <button onclick="salvarEscala()" class="bg-orange-500 text-white px-4 py-2 rounded font-bold">Salvar na Escala</button>
                 </div>
             </div>
-            <div id="lista-escalas" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
-        <div id="qrcode" class="tab-content">
-            <h2 class="text-2xl font-bold mb-4 text-center">Entrada / Saída</h2>
+        <div id="checkin" class="tab-content">
             
-            <div class="bg-white p-4 rounded shadow max-w-md mx-auto">
-                <div class="scanner-box bg-black rounded overflow-hidden mb-4 relative">
-                    <div id="reader" style="width: 100%;"></div>
-                    <div class="absolute top-0 left-0 w-full h-full border-2 border-red-500 opacity-20 pointer-events-none"></div>
+            <div class="max-w-2xl mx-auto">
+                <div class="flex bg-white rounded-lg shadow mb-6 p-1">
+                    <button onclick="setCheckinMode('entrada')" id="btn-mode-entrada" class="flex-1 py-3 rounded-md font-bold transition-all bg-green-500 text-white shadow">
+                        <i class="fas fa-sign-in-alt mr-2"></i> ENTRADA (Vincular)
+                    </button>
+                    <button onclick="setCheckinMode('saida')" id="btn-mode-saida" class="flex-1 py-3 rounded-md font-bold transition-all text-gray-500 hover:bg-gray-100">
+                        <i class="fas fa-sign-out-alt mr-2"></i> SAÍDA (Baixa)
+                    </button>
                 </div>
 
-                <div class="flex gap-2 justify-center mb-4">
-                    <input type="text" id="manual-qr" placeholder="Digitar Cód." class="border p-2 rounded w-24 text-center text-lg font-mono">
-                    <button onclick="processarCheckinManual()" class="bg-gray-800 text-white px-4 rounded"><i class="fas fa-arrow-right"></i></button>
+                <div id="area-entrada" class="block">
+                    <div class="bg-white p-6 rounded-lg shadow-lg border-t-4 border-green-500">
+                        <h3 class="text-lg font-bold mb-4 text-center">1. Selecione a Criança</h3>
+                        
+                        <div class="relative mb-4">
+                            <input type="text" id="busca-crianca" onkeyup="filtrarCriancasEntrada()" placeholder="Digite o nome da criança..." class="w-full p-4 text-lg border-2 border-gray-300 rounded focus:border-green-500 focus:outline-none">
+                            <i class="fas fa-search absolute right-4 top-5 text-gray-400"></i>
+                        </div>
+
+                        <div id="resultado-busca-kids" class="max-h-48 overflow-y-auto border rounded bg-gray-50 hidden mb-4">
+                            </div>
+
+                        <div id="kid-selecionada" class="hidden bg-green-50 border border-green-200 p-4 rounded mb-4 text-center">
+                            <p class="text-sm text-green-800">Criança Selecionada:</p>
+                            <h4 id="kid-sel-nome" class="text-2xl font-bold text-green-900">Joãozinho</h4>
+                            <p id="kid-sel-detalhe" class="text-sm text-gray-600 mb-3">5 anos - Sala 3-5</p>
+                            
+                            <hr class="border-green-200 my-3">
+                            
+                            <p class="font-bold text-gray-700 mb-2">2. Bipe ou Digite o Crachá/Pulseira HOJE:</p>
+                            <div class="flex gap-2 justify-center">
+                                <input type="text" id="qr-entrada-manual" placeholder="Nº Pulseira" class="border-2 border-green-500 p-2 rounded w-32 text-center text-xl font-bold bg-white" autofocus>
+                                <button onclick="confirmarEntrada()" class="bg-green-600 text-white px-4 rounded font-bold shadow hover:bg-green-700">CONFIRMAR</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="qr-result" class="hidden text-center border rounded p-4">
-                    <h3 id="qr-msg-title" class="text-2xl font-bold mb-1"></h3>
-                    <p id="qr-msg-body" class="text-lg"></p>
-                    <div id="qr-msg-details" class="mt-2 text-sm text-gray-600 bg-gray-100 p-2 rounded"></div>
-                    <p id="qr-msg-time" class="text-xs text-gray-400 mt-2"></p>
+                <div id="area-saida" class="hidden">
+                    <div class="bg-white p-6 rounded-lg shadow-lg border-t-4 border-red-500 text-center">
+                        <h3 class="text-lg font-bold mb-4">Devolução de Crachá</h3>
+                        
+                        <div class="scanner-box bg-black rounded overflow-hidden mb-4 relative h-64 mx-auto">
+                            <div id="reader-saida" style="width: 100%; height: 100%;"></div>
+                            <div class="absolute inset-0 border-2 border-red-500 opacity-30 pointer-events-none"></div>
+                        </div>
+
+                        <p class="text-sm text-gray-500 mb-2">Ou digite o código manualmente:</p>
+                        <div class="flex gap-2 justify-center">
+                            <input type="text" id="qr-saida-manual" placeholder="Cód. Pulseira" class="border-2 border-gray-300 p-2 rounded w-32 text-center text-xl font-bold">
+                            <button onclick="processarSaidaManual()" class="bg-gray-800 text-white px-4 rounded font-bold"><i class="fas fa-check"></i></button>
+                        </div>
+                    </div>
                 </div>
+
+                <div id="status-msg" class="mt-4 hidden p-4 rounded text-center shadow-lg transition-all transform scale-100">
+                    <h3 id="st-titulo" class="text-2xl font-bold"></h3>
+                    <p id="st-desc" class="text-lg"></p>
+                </div>
+
             </div>
         </div>
 
     </main>
 
     <script>
-        // --- CONFIGURAÇÃO (SUAS CHAVES) ---
+        // --- CONFIGURAÇÃO ---
         const supabaseUrl = 'https://nekbbkenxcukoortusge.supabase.co'; 
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc'; 
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -189,40 +250,38 @@
             
             // Lógica ao abrir abas
             if(tabId === 'professores') carregarProfessores();
-            if(tabId === 'escala') { carregarProfessoresCheckbox(); carregarEscalas(); }
+            if(tabId === 'escala') { 
+                carregarProfessoresCheckbox(); 
+                // Define data de hoje no filtro e carrega
+                const hoje = new Date().toISOString().split('T')[0];
+                document.getElementById('filtro-escala-data').value = hoje;
+                carregarEscalas(hoje); 
+            }
             if(tabId === 'dashboard') carregarDashboard();
-            if(tabId === 'criancas') carregarCriancas();
-            if(tabId === 'qrcode') startScanner();
-            else stopScanner();
+            if(tabId === 'criancas') carregarUltimasCriancas();
+            if(tabId === 'checkin') {
+                setCheckinMode('entrada'); // Default entrada
+            } else {
+                stopScanner();
+            }
         }
 
         // ==========================================
-        // 1. DASHBOARD PRINCIPAL (AO VIVO)
+        // 1. DASHBOARD
         // ==========================================
         async function carregarDashboard() {
-            // AJUSTE: Garantir data local no formato YYYY-MM-DD
-            const now = new Date();
-            const hoje = now.getFullYear() + '-' + 
-                        String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                        String(now.getDate()).padStart(2, '0');
-
+            const hoje = new Date().toISOString().split('T')[0];
             const divSalas = document.getElementById('painel-salas');
-            divSalas.innerHTML = '<div class="col-span-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Carregando dados de hoje...</div>';
+            divSalas.innerHTML = '<div class="col-span-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
 
-            // 1. Buscar Professores Escalados APENAS Hoje
-            const { data: escalas } = await _supabase
-                .from('escala2')
-                .select('*')
-                .eq('data_culto', hoje); // Filtro estrito pela data de hoje
-
-            // 2. Buscar Crianças Presentes (Hora Saída IS NULL)
-            const { data: presencas } = await _supabase
-                .from('presenca')
-                .select('sala_atual, hora_saida, criancas(nome, nome_responsavel)')
+            // Buscar Escala Hoje
+            const { data: escalas } = await _supabase.from('escala2').select('*').eq('data_culto', hoje);
+            // Buscar Presenças Hoje (Sem saída)
+            const { data: presencas } = await _supabase.from('presenca')
+                .select('sala_atual, qrcode_temp, criancas(nome)')
                 .eq('data_culto', hoje)
                 .is('hora_saida', null); 
 
-            // Estrutura Base das Salas
             const estruturaSalas = {
                 "0-2": { titulo: "0 a 2 Anos", profs: "Não escalado", kids: [] },
                 "3-5": { titulo: "3 a 5 Anos", profs: "Não escalado", kids: [] },
@@ -230,40 +289,30 @@
                 "9-12": { titulo: "9 a 12 Anos", profs: "Não escalado", kids: [] }
             };
 
-            // Preencher Professores (Se houver escala para hoje)
-            if(escalas && escalas.length > 0) {
-                escalas.forEach(esc => {
-                    if(estruturaSalas[esc.sala]) {
-                        estruturaSalas[esc.sala].profs = esc.professores_nomes;
-                    }
-                });
-            }
-
-            // Preencher Crianças
+            if(escalas) escalas.forEach(esc => { if(estruturaSalas[esc.sala]) estruturaSalas[esc.sala].profs = esc.professores_nomes; });
+            
             let totalCount = 0;
             if(presencas) {
                 presencas.forEach(p => {
                     if(p.criancas && estruturaSalas[p.sala_atual]) {
-                        estruturaSalas[p.sala_atual].kids.push(p.criancas.nome);
+                        // Mostra nome + número do crachá temporário
+                        estruturaSalas[p.sala_atual].kids.push({ nome: p.criancas.nome, qr: p.qrcode_temp });
                         totalCount++;
                     }
                 });
             }
             document.getElementById('dash-total-kids').innerText = totalCount;
 
-            // Renderizar HTML
             divSalas.innerHTML = '';
             for (const [key, sala] of Object.entries(estruturaSalas)) {
-                let listaKidsHTML = '';
-                if(sala.kids.length === 0) {
-                    listaKidsHTML = '<p class="text-gray-400 text-xs italic p-2">Sala vazia</p>';
-                } else {
-                    listaKidsHTML = '<ul class="kid-list text-sm text-gray-700 divide-y">';
-                    sala.kids.forEach(nome => {
-                        listaKidsHTML += `<li class="py-1 px-2 flex items-center"><i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i> ${nome}</li>`;
-                    });
-                    listaKidsHTML += '</ul>';
-                }
+                let listaKidsHTML = sala.kids.length === 0 ? '<p class="text-gray-400 text-xs italic p-2">Sala vazia</p>' : '<ul class="kid-list text-sm text-gray-700 divide-y">';
+                sala.kids.forEach(k => {
+                    listaKidsHTML += `<li class="py-1 px-2 flex justify-between items-center">
+                        <span><i class="fas fa-child text-blue-500 mr-1"></i> ${k.nome}</span>
+                        <span class="bg-yellow-100 text-xs px-1 rounded border border-yellow-200">#${k.qr || '?'}</span>
+                    </li>`;
+                });
+                if(sala.kids.length > 0) listaKidsHTML += '</ul>';
 
                 divSalas.innerHTML += `
                     <div class="bg-white rounded-lg shadow border-t-4 ${sala.kids.length > 0 ? 'border-green-500' : 'border-gray-300'} overflow-hidden">
@@ -274,251 +323,294 @@
                             </div>
                             <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full font-bold">${sala.kids.length}</span>
                         </div>
-                        <div class="p-2 bg-white">
-                            <p class="text-xs font-bold text-gray-400 uppercase mb-1">Alunos Presentes:</p>
-                            ${listaKidsHTML}
-                        </div>
+                        <div class="p-2 bg-white">${listaKidsHTML}</div>
                     </div>
                 `;
             }
         }
 
         // ==========================================
-        // 2. HISTÓRICO
+        // 2. CHECK-IN / OUT (CRÍTICO: LÓGICA NOVA)
         // ==========================================
-        async function buscarHistorico() {
-            const dataBusca = document.getElementById('hist-data').value;
-            if(!dataBusca) return alert("Selecione uma data.");
+        let checkinMode = 'entrada';
+        let criancaSelecionadaID = null;
+        let html5QrcodeScanner = null;
 
-            const divResult = document.getElementById('hist-resultado');
-            divResult.innerHTML = '<p class="text-center text-gray-500">Buscando dados...</p>';
+        function setCheckinMode(mode) {
+            checkinMode = mode;
+            stopScanner();
+            document.getElementById('status-msg').classList.add('hidden');
 
-            // Buscar escalas do dia
-            const { data: escalas } = await _supabase.from('escala2').select('*').eq('data_culto', dataBusca);
+            const btnEntrada = document.getElementById('btn-mode-entrada');
+            const btnSaida = document.getElementById('btn-mode-saida');
+            const areaEntrada = document.getElementById('area-entrada');
+            const areaSaida = document.getElementById('area-saida');
 
-            // Buscar TODAS as presenças (independente de saida)
-            const { data: historico } = await _supabase
-                .from('presenca')
-                .select('sala_atual, hora_entrada, hora_saida, criancas(nome)')
-                .eq('data_culto', dataBusca)
-                .order('sala_atual');
-
-            if((!escalas || escalas.length === 0) && (!historico || historico.length === 0)){
-                divResult.innerHTML = `<div class="bg-yellow-100 p-4 text-center rounded text-yellow-700">Nenhum registro encontrado para ${dataBusca.split('-').reverse().join('/')}.</div>`;
-                return;
+            if(mode === 'entrada') {
+                btnEntrada.className = "flex-1 py-3 rounded-md font-bold transition-all bg-green-500 text-white shadow transform scale-105";
+                btnSaida.className = "flex-1 py-3 rounded-md font-bold transition-all text-gray-500 hover:bg-gray-100";
+                areaEntrada.classList.remove('hidden');
+                areaSaida.classList.add('hidden');
+                // Reset Entrada
+                document.getElementById('busca-crianca').value = '';
+                document.getElementById('kid-selecionada').classList.add('hidden');
+                document.getElementById('resultado-busca-kids').classList.add('hidden');
+            } else {
+                btnSaida.className = "flex-1 py-3 rounded-md font-bold transition-all bg-red-500 text-white shadow transform scale-105";
+                btnEntrada.className = "flex-1 py-3 rounded-md font-bold transition-all text-gray-500 hover:bg-gray-100";
+                areaEntrada.classList.add('hidden');
+                areaSaida.classList.remove('hidden');
+                startScannerSaida();
             }
-
-            // Agrupar dados
-            const dadosSalas = { "0-2": [], "3-5": [], "6-8": [], "9-12": [] };
-            const profsSalas = { "0-2": "S/ Prof", "3-5": "S/ Prof", "6-8": "S/ Prof", "9-12": "S/ Prof" };
-
-            if(escalas) escalas.forEach(e => { if(profsSalas[e.sala]) profsSalas[e.sala] = e.professores_nomes; });
-            
-            if(historico) {
-                historico.forEach(h => {
-                    if(dadosSalas[h.sala_atual]) dadosSalas[h.sala_atual].push(h);
-                });
-            }
-
-            // Montar Relatório
-            let html = '';
-            for(const [salaCode, lista] of Object.entries(dadosSalas)) {
-                html += `
-                    <div class="bg-white rounded shadow p-4 border-l-4 border-indigo-500">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="font-bold text-lg">Sala ${salaCode} anos</h3>
-                            <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">Total: ${lista.length}</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-3"><strong>Professor(es):</strong> ${profsSalas[salaCode]}</p>
-                        
-                        ${lista.length === 0 ? '<p class="text-sm text-gray-400">Sem alunos.</p>' : 
-                          `<div class="overflow-x-auto"><table class="w-full text-xs text-left">
-                                <thead class="bg-gray-100"><tr><th class="p-2">Criança</th><th class="p-2">Entrada</th><th class="p-2">Saída</th></tr></thead>
-                                <tbody>` + 
-                                lista.map(item => `
-                                    <tr class="border-b">
-                                        <td class="p-2 font-medium">${item.criancas ? item.criancas.nome : 'Desc.'}</td>
-                                        <td class="p-2">${new Date(item.hora_entrada).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
-                                        <td class="p-2">${item.hora_saida ? new Date(item.hora_saida).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '<span class="text-red-500">Sem saída</span>'}</td>
-                                    </tr>
-                                `).join('') + 
-                          `</tbody></table></div>`
-                        }
-                    </div>
-                `;
-            }
-            divResult.innerHTML = html;
         }
 
-        // ==========================================
-        // 3. CHECK-IN / CHECK-OUT
-        // ==========================================
-        async function processarCheckin(qrcode) {
-            const divRes = document.getElementById('qr-result');
-            const elTitle = document.getElementById('qr-msg-title');
-            const elBody = document.getElementById('qr-msg-body');
-            const elDetails = document.getElementById('qr-msg-details');
+        // --- LÓGICA DE ENTRADA (VINCULAR) ---
+        async function filtrarCriancasEntrada() {
+            const termo = document.getElementById('busca-crianca').value.toLowerCase();
+            const divRes = document.getElementById('resultado-busca-kids');
             
-            divRes.classList.remove('hidden', 'bg-red-50', 'bg-green-50', 'bg-blue-50', 'border-red-500', 'border-green-500', 'border-blue-500');
-            divRes.classList.add('block');
+            if(termo.length < 3) { divRes.classList.add('hidden'); return; }
 
-            // Buscar criança
-            const { data: kid } = await _supabase.from('criancas').select('*').eq('qrcode_code', qrcode).single();
+            const { data } = await _supabase.from('criancas').select('*').ilike('nome', `%${termo}%`).limit(5);
+            
+            divRes.innerHTML = '';
+            divRes.classList.remove('hidden');
 
-            if(!kid) {
-                divRes.classList.add('bg-red-50', 'border-red-500');
-                elTitle.innerText = "NÃO ENCONTRADO";
-                elTitle.className = "text-xl font-bold text-red-600";
-                elBody.innerText = `QR Code ${qrcode} inválido.`;
-                elDetails.innerHTML = "";
+            if(!data || data.length === 0) {
+                divRes.innerHTML = '<div class="p-3 text-gray-500 text-sm">Nenhuma criança encontrada. <a href="#" onclick="showTab(\'criancas\')" class="text-blue-500 underline">Cadastrar?</a></div>';
                 return;
             }
 
+            data.forEach(kid => {
+                // Calcular idade
+                const idade = calcularIdade(kid.data_nascimento);
+                divRes.innerHTML += `
+                    <div onclick="selecionarCrianca(${kid.id}, '${kid.nome}', ${idade}, '${kid.sala_fixa || ''}')" 
+                         class="p-3 border-b hover:bg-green-50 cursor-pointer flex justify-between items-center transition-colors">
+                        <div>
+                            <p class="font-bold text-gray-800">${kid.nome}</p>
+                            <p class="text-xs text-gray-500">Resp: ${kid.nome_responsavel || '-'}</p>
+                        </div>
+                        <span class="text-xs bg-gray-200 px-2 py-1 rounded">${idade} anos</span>
+                    </div>
+                `;
+            });
+        }
+
+        function selecionarCrianca(id, nome, idade, salaFixa) {
+            criancaSelecionadaID = id;
+            document.getElementById('resultado-busca-kids').classList.add('hidden');
+            document.getElementById('busca-crianca').value = '';
+            
+            // Mostrar card de seleção
+            const divSel = document.getElementById('kid-selecionada');
+            divSel.classList.remove('hidden');
+            document.getElementById('kid-sel-nome').innerText = nome;
+            
             // Definir Sala
-            let salaFinal = kid.sala_fixa;
-            let idade = calcularIdade(kid.data_nascimento);
-            
+            let salaFinal = salaFixa;
             if(!salaFinal) {
-                // Cálculo automático se não tiver fixa
                 if (idade <= 2) salaFinal = "0-2";
                 else if (idade <= 5) salaFinal = "3-5";
                 else if (idade <= 8) salaFinal = "6-8";
                 else if (idade <= 12) salaFinal = "9-12";
                 else salaFinal = "Visitante";
             }
-
-            // Ajuste para garantir data local
-            const now = new Date();
-            const hoje = now.getFullYear() + '-' + 
-                         String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                         String(now.getDate()).padStart(2, '0');
+            document.getElementById('kid-sel-detalhe').innerText = `${idade} anos - Sala Sugerida: ${salaFinal}`;
             
-            // Verificar status atual
-            const { data: presenca } = await _supabase
-                .from('presenca')
-                .select('*')
-                .eq('crianca_id', kid.id)
+            // Focar no campo de QR code
+            setTimeout(() => document.getElementById('qr-entrada-manual').focus(), 100);
+        }
+
+        async function confirmarEntrada() {
+            const qrTemp = document.getElementById('qr-entrada-manual').value;
+            if(!criancaSelecionadaID || !qrTemp) return alert('Selecione a criança e informe o crachá.');
+
+            const hoje = new Date().toISOString().split('T')[0];
+            
+            // Verificar se esta criança JÁ está no sistema hoje sem sair
+            const { data: jaExiste } = await _supabase.from('presenca')
+                .select('id')
+                .eq('crianca_id', criancaSelecionadaID)
+                .eq('data_culto', hoje)
+                .is('hora_saida', null);
+            
+            if(jaExiste && jaExiste.length > 0) {
+                alert('Esta criança já deu entrada hoje!');
+                return;
+            }
+
+            // Verificar se esse CRACHÁ já está em uso
+            const { data: crachaUso } = await _supabase.from('presenca')
+                .select('id, criancas(nome)')
+                .eq('qrcode_temp', qrTemp)
+                .eq('data_culto', hoje)
+                .is('hora_saida', null);
+
+            if(crachaUso && crachaUso.length > 0) {
+                alert(`Erro: O crachá ${qrTemp} já está sendo usado por ${crachaUso[0].criancas.nome} agora.`);
+                return;
+            }
+
+            // Registrar Entrada
+            // Recuperar sala (lógica repetida simplificada)
+            const txtDetalhe = document.getElementById('kid-sel-detalhe').innerText;
+            const sala = txtDetalhe.split('Sala Sugerida: ')[1] || '0-2';
+
+            const { error } = await _supabase.from('presenca').insert([{
+                crianca_id: criancaSelecionadaID,
+                data_culto: hoje,
+                sala_atual: sala,
+                qrcode_temp: qrTemp // AQUI ESTÁ O CAMPO NOVO
+            }]);
+
+            if(error) {
+                alert('Erro ao salvar: ' + error.message);
+            } else {
+                mostrarStatus('Sucesso!', `Entrada registrada para ${document.getElementById('kid-sel-nome').innerText} com pulseira #${qrTemp}`, 'bg-green-100', 'text-green-800');
+                
+                // Resetar UI
+                document.getElementById('kid-selecionada').classList.add('hidden');
+                document.getElementById('qr-entrada-manual').value = '';
+                criancaSelecionadaID = null;
+            }
+        }
+
+        // --- LÓGICA DE SAÍDA (LER CRACHÁ) ---
+        function startScannerSaida() {
+            if(html5QrcodeScanner) return;
+            try {
+                html5QrcodeScanner = new Html5Qrcode("reader-saida");
+                html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, 
+                (decodedText) => {
+                    // Sucesso no Scan
+                    html5QrcodeScanner.pause();
+                    processarSaida(decodedText);
+                });
+            } catch(e) { console.log("Erro cam", e); }
+        }
+
+        function stopScanner() {
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }).catch(()=>{});
+            }
+        }
+
+        function processarSaidaManual() {
+            const val = document.getElementById('qr-saida-manual').value;
+            if(val) processarSaida(val);
+        }
+
+        async function processarSaida(qrCodeLido) {
+            const hoje = new Date().toISOString().split('T')[0];
+
+            // Buscar quem está usando esse QR Code HOJE e não saiu
+            const { data: registro } = await _supabase.from('presenca')
+                .select('id, criancas(nome, nome_responsavel)')
+                .eq('qrcode_temp', qrCodeLido)
                 .eq('data_culto', hoje)
                 .is('hora_saida', null)
                 .maybeSingle();
 
-            if (presenca) {
-                // SAÍDA
-                await _supabase.from('presenca').update({ hora_saida: new Date() }).eq('id', presenca.id);
-                
-                divRes.classList.add('bg-blue-50', 'border-blue-500');
-                elTitle.innerText = "SAÍDA REGISTRADA";
-                elTitle.className = "text-xl font-bold text-blue-600";
-                elBody.innerHTML = `Até logo, <b>${kid.nome}</b>!`;
-                elDetails.innerHTML = `Entregue ao responsável: <b>${kid.nome_responsavel || 'Não informado'}</b>`;
-                
-                // Remover do painel principal (se estiver aberto em outra tela, atualiza no próximo refresh)
-            } else {
-                // ENTRADA
-                const { error } = await _supabase.from('presenca').insert([{
-                    crianca_id: kid.id,
-                    data_culto: hoje,
-                    sala_atual: salaFinal
-                }]);
-
-                if(!error) {
-                    divRes.classList.add('bg-green-50', 'border-green-500');
-                    elTitle.innerText = "ENTRADA CONFIRMADA";
-                    elTitle.className = "text-xl font-bold text-green-600";
-                    elBody.innerHTML = `Bem-vindo(a), <b>${kid.nome}</b>!`;
-                    elDetails.innerHTML = `Sala: <b>${salaFinal}</b><br>Resp: ${kid.nome_responsavel || '-'}`;
-                }
+            if(!registro) {
+                mostrarStatus('Não Encontrado', `Nenhuma criança ativa com a pulseira #${qrCodeLido} hoje.`, 'bg-red-100', 'text-red-800');
+                resumeScanner();
+                return;
             }
-            document.getElementById('qr-msg-time').innerText = "Registro: " + new Date().toLocaleTimeString();
-        }
 
-        // ==========================================
-        // 4. CADASTRO DE CRIANÇAS ATUALIZADO
-        // ==========================================
-        async function addCrianca() {
-            const nome = document.getElementById('kid-nome').value;
-            const nasc = document.getElementById('kid-nasc').value;
-            const resp = document.getElementById('kid-resp').value;
-            const sala = document.getElementById('kid-sala').value;
-            const qr = document.getElementById('kid-qr').value;
+            // Realizar Saída
+            await _supabase.from('presenca').update({ hora_saida: new Date() }).eq('id', registro.id);
 
-            if(!nome || !nasc || !qr || !resp) return alert('Preencha Nome, Nascimento, Responsável e QR.');
-
-            const payload = { 
-                nome, 
-                data_nascimento: nasc, 
-                nome_responsavel: resp, 
-                qrcode_code: qr 
-            };
-            if(sala) payload.sala_fixa = sala;
-
-            const { error } = await _supabase.from('criancas').insert([payload]);
-
-            if(error) alert('Erro: ' + error.message);
-            else {
-                alert('Criança cadastrada com sucesso!');
-                document.getElementById('kid-nome').value = '';
-                document.getElementById('kid-qr').value = '';
-                carregarCriancas();
-            }
-        }
-
-        async function carregarCriancas() {
-            const { data } = await _supabase.from('criancas').select('*').order('id', {ascending: false}).limit(10);
-            const div = document.getElementById('lista-criancas');
-            div.innerHTML = '';
-            if(data) {
-                data.forEach(c => {
-                    div.innerHTML += `
-                        <div class="border-b py-2 flex justify-between items-center text-sm">
-                            <div>
-                                <span class="font-bold text-gray-700">${c.nome}</span>
-                                <div class="text-xs text-gray-500">Resp: ${c.nome_responsavel || '-'}</div>
-                            </div>
-                            <span class="bg-yellow-100 font-mono px-2 rounded">QR: ${c.qrcode_code}</span>
-                        </div>`;
-                });
-            }
-        }
-
-        // ==========================================
-        // UTILITÁRIOS E OUTRAS FUNÇÕES
-        // ==========================================
-        function calcularIdade(dataNasc) {
-            const hoje = new Date();
-            const nasc = new Date(dataNasc);
-            let idade = hoje.getFullYear() - nasc.getFullYear();
-            const m = hoje.getMonth() - nasc.getMonth();
-            if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
-            return idade;
-        }
-
-        // Scanner Logic
-        let html5QrcodeScanner = null;
-        function startScanner() {
-            if(html5QrcodeScanner) return;
-            try {
-                html5QrcodeScanner = new Html5Qrcode("reader");
-                html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess);
-            } catch (e) { console.log(e); }
-        }
-        function stopScanner() {
-            if(html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }).catch(err=>{});
-            }
-        }
-        function onScanSuccess(decodedText) {
+            mostrarStatus('Saída Confirmada', `Até logo, <b>${registro.criancas.nome}</b>!<br>Responsável: ${registro.criancas.nome_responsavel}`, 'bg-blue-100', 'text-blue-800');
+            
             if(navigator.vibrate) navigator.vibrate(200);
-            processarCheckin(decodedText);
-            html5QrcodeScanner.pause();
-            setTimeout(() => html5QrcodeScanner.resume(), 3500);
-        }
-        function processarCheckinManual() {
-            const val = document.getElementById('manual-qr').value;
-            if(val) processarCheckin(val);
+            
+            document.getElementById('qr-saida-manual').value = '';
+            setTimeout(() => resumeScanner(), 4000);
         }
 
-        // Profs Logic
+        function resumeScanner() {
+            if(html5QrcodeScanner && checkinMode === 'saida') html5QrcodeScanner.resume();
+        }
+
+        function mostrarStatus(titulo, desc, corBg, corTexto) {
+            const div = document.getElementById('status-msg');
+            const t = document.getElementById('st-titulo');
+            const d = document.getElementById('st-desc');
+            
+            div.className = `mt-4 p-6 rounded text-center shadow-lg transition-all ${corBg} ${corTexto} pulse-success`;
+            t.innerHTML = titulo;
+            d.innerHTML = desc;
+            div.classList.remove('hidden');
+        }
+
+        // ==========================================
+        // 3. ESCALA (COM FILTRO)
+        // ==========================================
+        async function salvarEscala() {
+            const dataCulto = document.getElementById('escala-data').value;
+            const sala = document.getElementById('escala-sala').value;
+            const checkboxes = document.querySelectorAll('.prof-checkbox:checked');
+            const nomes = Array.from(checkboxes).map(cb => cb.value).join(', ');
+            
+            if(!dataCulto || checkboxes.length === 0) return alert('Preencha a data e selecione professores.');
+            
+            await _supabase.from('escala2').insert([{ data_culto: dataCulto, sala: sala, professores_nomes: nomes }]);
+            alert('Escala salva!');
+            
+            // Atualiza filtro para a data que acabou de salvar e recarrega
+            document.getElementById('filtro-escala-data').value = dataCulto;
+            carregarEscalas(dataCulto);
+        }
+
+        async function carregarEscalas(dataFiltro) {
+            const lista = document.getElementById('lista-escalas');
+            lista.innerHTML = '<p class="text-gray-500 text-sm">Buscando...</p>';
+
+            let query = _supabase.from('escala2').select('*');
+            
+            if(dataFiltro) {
+                query = query.eq('data_culto', dataFiltro);
+            } else {
+                query = query.limit(10); // Se não tiver data, traz últimos
+            }
+            
+            const { data } = await query.order('sala'); // Ordena por sala para agrupar visualmente
+
+            lista.innerHTML = '';
+            if(!data || data.length === 0) {
+                lista.innerHTML = '<div class="p-4 bg-gray-50 rounded text-center text-gray-500">Ninguém escalado para esta data.</div>';
+                return;
+            }
+
+            data.forEach(e => {
+                // Formatação simples da data para exibição
+                const dataFormatada = e.data_culto.split('-').reverse().join('/');
+                lista.innerHTML += `
+                    <div class="bg-indigo-50 p-3 rounded border border-indigo-100 flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-indigo-400 block">${dataFormatada}</span>
+                            <span class="font-bold text-indigo-800 text-lg">Sala ${e.sala}</span>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-gray-700 font-medium text-sm">${e.professores_nomes}</p>
+                        </div>
+                    </div>`;
+            });
+        }
+        
+        async function carregarProfessoresCheckbox() {
+            const { data } = await _supabase.from('professores').select('*').order('nome');
+            const container = document.getElementById('escala-prof-select');
+            container.innerHTML = '';
+            if(data) data.forEach(p => {
+                container.innerHTML += `<label class="flex items-center space-x-2 cursor-pointer bg-white p-2 rounded border hover:bg-gray-50"><input type="checkbox" value="${p.nome}" class="prof-checkbox accent-orange-500"><span class="text-sm font-medium text-gray-700">${p.nome}</span></label>`;
+            });
+        }
+
+        // ==========================================
+        // OUTRAS FUNÇÕES (Cadastro, Histórico, Utils)
+        // ==========================================
         async function addProfessor() {
             const nome = document.getElementById('prof-nome').value;
             const sala = document.getElementById('prof-sala').value;
@@ -532,36 +624,85 @@
             const lista = document.getElementById('lista-professores');
             lista.innerHTML = '';
             if(data) data.forEach(p => {
-                lista.innerHTML += `<tr class="border-b"><td class="p-3 font-medium">${p.nome}</td><td class="p-3 text-sm">${p.sala_preferencia||'-'}</td><td class="p-3"><button onclick="delProf(${p.id})" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`;
+                lista.innerHTML += `<tr class="border-b"><td class="p-3 font-medium">${p.nome}</td><td class="p-3 text-sm">${p.sala_preferencia||'-'}</td><td class="p-3"><button onclick="delProf(${p.id})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></td></tr>`;
             });
         }
         async function delProf(id) { if(confirm('Excluir?')) { await _supabase.from('professores').delete().eq('id', id); carregarProfessores(); } }
 
-        // Escala Logic
-        async function carregarProfessoresCheckbox() {
-            const { data } = await _supabase.from('professores').select('*').order('nome');
-            const container = document.getElementById('escala-prof-select');
-            container.innerHTML = '';
-            if(data) data.forEach(p => {
-                container.innerHTML += `<label class="flex items-center space-x-2 cursor-pointer bg-white p-1 rounded border"><input type="checkbox" value="${p.nome}" class="prof-checkbox"><span class="text-xs font-bold">${p.nome}</span></label>`;
+        async function addCrianca() {
+            const nome = document.getElementById('kid-nome').value;
+            const nasc = document.getElementById('kid-nasc').value;
+            const resp = document.getElementById('kid-resp').value;
+            const sala = document.getElementById('kid-sala').value;
+
+            if(!nome || !nasc) return alert('Preencha Nome e Data de Nascimento.');
+            // QR Code removido do cadastro obrigatório, pois é dinâmico agora
+            const payload = { nome, data_nascimento: nasc, nome_responsavel: resp, qrcode_code: 'DYNAM_' + Date.now() }; // Placeholder
+            if(sala) payload.sala_fixa = sala;
+            const { error } = await _supabase.from('criancas').insert([payload]);
+            if(error) alert('Erro: ' + error.message);
+            else { alert('Criança cadastrada!'); document.getElementById('kid-nome').value = ''; carregarUltimasCriancas(); }
+        }
+        async function carregarUltimasCriancas() {
+            const { data } = await _supabase.from('criancas').select('*').order('id', {ascending: false}).limit(5);
+            const div = document.getElementById('lista-criancas');
+            div.innerHTML = '';
+            if(data) data.forEach(c => {
+                div.innerHTML += `<div class="border-b py-2 flex justify-between items-center text-sm"><div><span class="font-bold text-gray-700">${c.nome}</span><div class="text-xs text-gray-500">Resp: ${c.nome_responsavel || '-'}</div></div></div>`;
             });
         }
-        async function salvarEscala() {
-            const dataCulto = document.getElementById('escala-data').value;
-            const sala = document.getElementById('escala-sala').value;
-            const checkboxes = document.querySelectorAll('.prof-checkbox:checked');
-            const nomes = Array.from(checkboxes).map(cb => cb.value).join(', ');
-            if(!dataCulto || checkboxes.length === 0) return alert('Dados incompletos');
-            await _supabase.from('escala2').insert([{ data_culto: dataCulto, sala: sala, professores_nomes: nomes }]);
-            alert('Escalado!'); carregarEscalas();
-        }
-        async function carregarEscalas() {
-            const { data } = await _supabase.from('escala2').select('*').order('data_culto', { ascending: false }).limit(6);
-            const lista = document.getElementById('lista-escalas');
-            lista.innerHTML = '';
-            if(data) data.forEach(e => {
-                lista.innerHTML += `<div class="bg-white p-3 rounded border shadow-sm text-sm"><div class="flex justify-between font-bold text-indigo-600"><span>${new Date(e.data_culto).toLocaleDateString('pt-BR')}</span><span>Sala ${e.sala}</span></div><p class="mt-1 text-gray-700">${e.professores_nomes}</p></div>`;
+
+        async function buscarHistorico() {
+            const dataBusca = document.getElementById('hist-data').value;
+            if(!dataBusca) return alert("Selecione uma data.");
+            const divResult = document.getElementById('hist-resultado');
+            divResult.innerHTML = '<p class="text-center">Carregando...</p>';
+
+            const { data: historico } = await _supabase
+                .from('presenca')
+                .select('sala_atual, hora_entrada, hora_saida, qrcode_temp, criancas(nome)')
+                .eq('data_culto', dataBusca)
+                .order('sala_atual');
+
+            if(!historico || historico.length === 0){
+                divResult.innerHTML = `<div class="bg-yellow-100 p-4 rounded text-center text-yellow-800">Sem registros para esta data.</div>`;
+                return;
+            }
+
+            // Agrupamento manual para relatório
+            const grupos = {};
+            historico.forEach(h => {
+                if(!grupos[h.sala_atual]) grupos[h.sala_atual] = [];
+                grupos[h.sala_atual].push(h);
             });
+
+            divResult.innerHTML = '';
+            for(const [sala, items] of Object.entries(grupos)) {
+                let linhas = items.map(i => `
+                    <tr class="border-b">
+                        <td class="p-2">${i.criancas ? i.criancas.nome : 'Excluído'} <span class="text-xs text-gray-400">#${i.qrcode_temp}</span></td>
+                        <td class="p-2">${new Date(i.hora_entrada).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                        <td class="p-2">${i.hora_saida ? new Date(i.hora_saida).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '<span class="text-red-500 font-bold">---</span>'}</td>
+                    </tr>
+                `).join('');
+                
+                divResult.innerHTML += `
+                    <div class="bg-white rounded shadow p-4 border-l-4 border-blue-500">
+                        <h3 class="font-bold text-lg mb-2">Sala ${sala} <span class="text-sm font-normal text-gray-500">(${items.length} crianças)</span></h3>
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-100"><tr><th>Nome</th><th>Entrada</th><th>Saída</th></tr></thead>
+                            <tbody>${linhas}</tbody>
+                        </table>
+                    </div>`;
+            }
+        }
+
+        function calcularIdade(dataNasc) {
+            const hoje = new Date(); const nasc = new Date(dataNasc);
+            let idade = hoje.getFullYear() - nasc.getFullYear();
+            const m = hoje.getMonth() - nasc.getMonth();
+            if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+            return idade;
         }
 
         // Iniciar
