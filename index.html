@@ -3,142 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Departamento Infantil - Gestão Dinâmica</title>
+    <title>Departamento Infantil - Verbo da Vida ZL</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb', // Azul Verbo
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        accent: {
+                            500: '#f97316', // Laranja Vida
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
-        .tab-content { display: none; }
+        body { background-color: #f8fafc; }
+        
+        /* Animações e Utilitários */
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
         .tab-content.active { display: block; }
-        .scanner-box { width: 100%; max-width: 400px; margin: 0 auto; }
-        .kid-list { max-height: 200px; overflow-y: auto; }
-        /* Animação para feedback */
-        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(72, 187, 120, 0); } 100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); } }
-        .pulse-success { animation: pulse-green 1s infinite; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        
+        .pulse-success { animation: pulse-green 1.5s infinite; }
+        
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Scanner */
+        .scanner-box { border-radius: 1rem; overflow: hidden; position: relative; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        /* Glass Effect para Nav */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
     </style>
 </head>
-<body class="bg-gray-100 h-screen flex flex-col">
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
 
-    <nav class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
+    <nav class="glass-nav sticky top-0 z-50 px-4 py-3 shadow-sm">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold"><i class="fas fa-shapes"></i> Dept. Infantil</h1>
-            <div class="space-x-2 text-sm hidden md:block">
-                <button onclick="showTab('dashboard')" class="hover:text-indigo-200 font-medium">Painel</button>
-                <button onclick="showTab('historico')" class="hover:text-indigo-200 font-medium">Relatórios</button>
-                <button onclick="showTab('professores')" class="hover:text-indigo-200 font-medium">Professores</button>
-                <button onclick="showTab('escala')" class="hover:text-indigo-200 font-medium">Escala</button>
-                <button onclick="showTab('criancas')" class="hover:text-indigo-200 font-medium">Cadastro</button>
-                <button onclick="showTab('checkin')" class="bg-white text-indigo-700 px-3 py-1 rounded-full font-bold shadow">Check-in/Out</button>
-            </div>
-        </div>
-        <div class="flex justify-around md:hidden mt-2 text-xs overflow-x-auto py-2">
-            <button onclick="showTab('dashboard')" class="px-2">Painel</button>
-            <button onclick="showTab('historico')" class="px-2">Hist</button>
-            <button onclick="showTab('escala')" class="px-2">Escala</button>
-            <button onclick="showTab('criancas')" class="px-2">Cad</button>
-            <button onclick="showTab('checkin')" class="font-bold text-yellow-300 px-2 bg-indigo-800 rounded">ENTRADA/SAÍDA</button>
-        </div>
-    </nav>
-
-    <main class="container mx-auto p-4 flex-grow overflow-y-auto pb-24">
-
-        <div id="dashboard" class="tab-content active">
-            <div class="flex justify-between items-end mb-4">
-                <h2 class="text-2xl font-bold text-gray-800">Painel Ao Vivo</h2>
-                <button onclick="carregarDashboard()" class="text-indigo-600 text-sm bg-white p-2 rounded shadow"><i class="fas fa-sync"></i> Atualizar</button>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-lg">
-                    <h3 class="text-blue-100 text-sm font-semibold">Crianças Presentes Agora</h3>
-                    <p class="text-5xl font-bold mt-2" id="dash-total-kids">0</p>
+            <div class="flex items-center gap-3">
+                <div class="bg-brand-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/30">
+                    <i class="fas fa-heart text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-display font-bold text-slate-800 leading-tight">Verbo Kids</h1>
+                    <p class="text-[10px] font-bold text-brand-600 tracking-wider uppercase">Zona Leste</p>
                 </div>
             </div>
 
-            <div id="painel-salas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="hidden md:flex space-x-1 bg-slate-100 p-1 rounded-lg">
+                <button onclick="showTab('dashboard')" id="nav-dash" class="nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-brand-600 hover:bg-white hover:shadow-sm">Painel</button>
+                <button onclick="showTab('historico')" id="nav-hist" class="nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-brand-600 hover:bg-white hover:shadow-sm">Relatórios</button>
+                <button onclick="showTab('professores')" id="nav-prof" class="nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-brand-600 hover:bg-white hover:shadow-sm">Equipe</button>
+                <button onclick="showTab('escala')" id="nav-esc" class="nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-brand-600 hover:bg-white hover:shadow-sm">Escala</button>
+                <button onclick="showTab('criancas')" id="nav-cad" class="nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-brand-600 hover:bg-white hover:shadow-sm">Cadastro</button>
+            </div>
+
+            <button onclick="showTab('checkin')" class="hidden md:flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition-all transform hover:scale-105">
+                <i class="fas fa-qrcode"></i> Check-in
+            </button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-6 flex-grow overflow-y-auto pb-24 md:pb-6 custom-scroll">
+
+        <div id="dashboard" class="tab-content active">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-display font-bold text-slate-800">Visão Geral</h2>
+                    <p class="text-slate-500 text-sm">Acompanhamento em tempo real do culto.</p>
+                </div>
+                <button onclick="carregarDashboard()" class="bg-white border border-slate-200 text-brand-600 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Atualizar Dados
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-brand-600 to-brand-800 text-white p-6 rounded-2xl shadow-xl shadow-brand-900/20 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+                    <h3 class="text-brand-100 text-sm font-medium uppercase tracking-wider mb-1">Crianças Presentes</h3>
+                    <div class="flex items-baseline gap-2">
+                        <p class="text-5xl font-display font-bold" id="dash-total-kids">0</p>
+                        <span class="text-brand-200 text-sm">agora</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="painel-salas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 </div>
         </div>
 
         <div id="historico" class="tab-content">
-            <h2 class="text-2xl font-bold mb-4">Relatório de Presença</h2>
-            <div class="bg-white p-4 rounded shadow mb-6 flex flex-col md:flex-row gap-4 items-end">
+            <h2 class="text-2xl font-display font-bold mb-1 text-slate-800">Relatórios</h2>
+            <p class="text-slate-500 text-sm mb-6">Consulte a frequência dos cultos anteriores.</p>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-end">
                 <div class="w-full">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Data:</label>
-                    <input type="date" id="hist-data" class="border p-2 rounded w-full bg-gray-50">
+                    <label class="block text-slate-600 text-xs font-bold uppercase tracking-wide mb-2">Selecione a Data</label>
+                    <input type="date" id="hist-data" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all">
                 </div>
-                <button onclick="buscarHistorico()" class="bg-indigo-600 text-white px-6 py-2 rounded w-full md:w-auto h-10 shadow hover:bg-indigo-700">Buscar</button>
+                <button onclick="buscarHistorico()" class="w-full md:w-auto bg-brand-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md shadow-brand-500/30 hover:bg-brand-700 transition-all">
+                    Buscar Dados
+                </button>
             </div>
-            <div id="hist-resultado" class="space-y-6">
-                <p class="text-gray-500 text-center mt-10">Selecione uma data para ver o relatório.</p>
+            <div id="hist-resultado" class="space-y-4">
+                <div class="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                    <i class="far fa-calendar-alt text-4xl mb-3 opacity-50"></i>
+                    <p>Selecione uma data acima para visualizar.</p>
+                </div>
             </div>
         </div>
 
         <div id="professores" class="tab-content">
-            <h2 class="text-2xl font-bold mb-4">Cadastro de Professores</h2>
-            <div class="bg-white p-4 rounded shadow mb-4">
-                <div class="flex flex-col md:flex-row gap-2">
-                    <input type="text" id="prof-nome" placeholder="Nome do Professor" class="border p-2 rounded flex-grow">
-                    <select id="prof-sala" class="border p-2 rounded">
-                        <option value="">Preferência de Sala</option>
+            <h2 class="text-2xl font-display font-bold mb-6 text-slate-800">Equipe de Professores</h2>
+            
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3">Novo Professor</h3>
+                <div class="flex flex-col md:flex-row gap-3">
+                    <input type="text" id="prof-nome" placeholder="Nome Completo" class="flex-grow bg-slate-50 border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <select id="prof-sala" class="bg-slate-50 border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 outline-none text-slate-600">
+                        <option value="">Sala Preferência</option>
                         <option value="0-2">0-2 anos</option>
                         <option value="3-5">3-5 anos</option>
                         <option value="6-8">6-8 anos</option>
                         <option value="9-12">9-12 anos</option>
                     </select>
-                    <button onclick="addProfessor()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700"><i class="fas fa-plus"></i> Add</button>
+                    <button onclick="addProfessor()" class="bg-emerald-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-600 shadow-md shadow-emerald-500/20 transition-all">
+                        <i class="fas fa-plus mr-1"></i> Adicionar
+                    </button>
                 </div>
             </div>
-            <div class="bg-white rounded shadow overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-100"><tr><th class="p-3">Nome</th><th class="p-3">Sala Pref.</th><th class="p-3">Ação</th></tr></thead>
-                    <tbody id="lista-professores"></tbody>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Nome</th>
+                            <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Preferência</th>
+                            <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-professores" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
         </div>
 
         <div id="criancas" class="tab-content">
-            <h2 class="text-2xl font-bold mb-4">Cadastro de Criança</h2>
-            <div class="bg-white p-6 rounded shadow mb-6 border-l-4 border-indigo-500">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="kid-nome" placeholder="Nome Completo da Criança" class="border p-2 rounded w-full">
-                    <input type="date" id="kid-nasc" class="border p-2 rounded w-full" title="Data Nascimento">
-                    <input type="text" id="kid-resp" placeholder="Nome do Responsável" class="border p-2 rounded w-full">
-                    <select id="kid-sala" class="border p-2 rounded w-full">
-                        <option value="">Sala Automática (por Idade)</option>
-                        <option value="0-2">Fixar: 0 a 2 anos</option>
-                        <option value="3-5">Fixar: 3 a 5 anos</option>
-                        <option value="6-8">Fixar: 6 a 8 anos</option>
-                        <option value="9-12">Fixar: 9 a 12 anos</option>
-                    </select>
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl font-display font-bold mb-6 text-slate-800">Cadastro de Crianças</h2>
+                
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg shadow-slate-200/50 mb-8 border-t-4 border-brand-500">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nome da Criança</label>
+                            <input type="text" id="kid-nome" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Data Nascimento</label>
+                            <input type="date" id="kid-nasc" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 outline-none text-slate-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Responsável</label>
+                            <input type="text" id="kid-resp" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sala Fixa (Opcional)</label>
+                            <select id="kid-sala" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-brand-500 outline-none text-slate-600">
+                                <option value="">Automático (Baseado na Idade)</option>
+                                <option value="0-2">Berçário (0 a 2)</option>
+                                <option value="3-5">Maternal (3 a 5)</option>
+                                <option value="6-8">Primários (6 a 8)</option>
+                                <option value="9-12">Juniores (9 a 12)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 text-blue-800 p-3 rounded-lg text-sm mb-5 flex items-start gap-2">
+                        <i class="fas fa-info-circle mt-0.5"></i>
+                        <p>O número da pulseira/crachá será vinculado apenas no momento da entrada (Check-in).</p>
+                    </div>
+
+                    <button onclick="addCrianca()" class="w-full bg-brand-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-brand-500/30 hover:bg-brand-700 transition-all">
+                        Salvar Cadastro
+                    </button>
                 </div>
-                <p class="text-xs text-gray-500 mt-2">* O QR Code será vinculado apenas no momento da entrada (pulseira reutilizável).</p>
-                <button onclick="addCrianca()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded w-full font-bold hover:bg-indigo-700 shadow">Salvar Cadastro</button>
-            </div>
-            
-            <div class="bg-white p-4 rounded shadow">
-                <h3 class="font-bold mb-2 text-gray-600 border-b pb-2">Cadastrados Recentemente</h3>
-                <div id="lista-criancas" class="max-h-60 overflow-y-auto"></div>
+                
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                    <h3 class="font-display font-bold text-slate-700 mb-4 border-b pb-2">Últimos Cadastros</h3>
+                    <div id="lista-criancas" class="max-h-60 overflow-y-auto space-y-2 custom-scroll pr-2"></div>
+                </div>
             </div>
         </div>
 
         <div id="escala" class="tab-content">
-            <h2 class="text-2xl font-bold mb-4">Escala de Professores</h2>
+            <h2 class="text-2xl font-display font-bold mb-6 text-slate-800">Escala Ministerial</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <div class="bg-white p-4 rounded shadow mb-4 border-l-4 border-orange-400">
-                        <h3 class="font-bold mb-3">Criar Nova Escala</h3>
-                        <div class="grid grid-cols-1 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div class="md:col-span-5">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-accent-500"></div>
+                        <h3 class="font-display font-bold text-lg mb-5 text-slate-800">Nova Escala</h3>
+                        
+                        <div class="space-y-4">
                             <div>
-                                <label class="text-xs font-bold text-gray-500 uppercase">Data do Culto</label>
-                                <input type="date" id="escala-data" class="border p-2 rounded w-full">
+                                <label class="text-xs font-bold text-slate-400 uppercase">Data do Culto</label>
+                                <input type="date" id="escala-data" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-accent-500 outline-none">
                             </div>
                             <div>
-                                <label class="text-xs font-bold text-gray-500 uppercase">Sala</label>
-                                <select id="escala-sala" class="border p-2 rounded w-full">
+                                <label class="text-xs font-bold text-slate-400 uppercase">Sala</label>
+                                <select id="escala-sala" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-accent-500 outline-none">
                                     <option value="0-2">0 a 2 anos</option>
                                     <option value="3-5">3 a 5 anos</option>
                                     <option value="6-8">6 a 8 anos</option>
@@ -146,24 +248,23 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Professores:</label>
-                                <div id="escala-prof-select" class="h-32 overflow-y-auto border p-2 rounded bg-gray-50 grid grid-cols-1 gap-2"></div>
+                                <label class="text-xs font-bold text-slate-400 uppercase mb-2 block">Selecione os Professores:</label>
+                                <div id="escala-prof-select" class="h-40 overflow-y-auto border border-slate-200 rounded-lg p-2 bg-slate-50 custom-scroll space-y-1"></div>
                             </div>
-                            <button onclick="salvarEscala()" class="bg-orange-500 text-white px-4 py-2 rounded font-bold hover:bg-orange-600 shadow">Salvar Escala</button>
+                            <button onclick="salvarEscala()" class="w-full bg-accent-500 text-white py-3 rounded-lg font-bold shadow-md shadow-accent-500/30 hover:bg-orange-600 transition-all">
+                                Salvar Escala
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <div>
-                    <div class="bg-white p-4 rounded shadow h-full">
-                        <div class="flex justify-between items-center mb-4 border-b pb-2">
-                            <h3 class="font-bold text-gray-700">Consultar Escala</h3>
+                <div class="md:col-span-7">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-full flex flex-col">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                            <h3 class="font-display font-bold text-slate-700">Consulta</h3>
+                            <input type="date" id="filtro-escala-data" onchange="carregarEscalas(this.value)" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 text-sm outline-none">
                         </div>
-                        <div class="mb-4">
-                            <label class="text-sm font-bold text-gray-600">Filtrar por Data:</label>
-                            <input type="date" id="filtro-escala-data" onchange="carregarEscalas(this.value)" class="border p-2 rounded w-full mt-1 bg-blue-50">
-                        </div>
-                        <div id="lista-escalas" class="space-y-3 max-h-96 overflow-y-auto">
+                        <div id="lista-escalas" class="space-y-3 overflow-y-auto custom-scroll flex-grow pr-2">
                             </div>
                     </div>
                 </div>
@@ -171,65 +272,82 @@
         </div>
 
         <div id="checkin" class="tab-content">
-            
-            <div class="max-w-2xl mx-auto">
-                <div class="flex bg-white rounded-lg shadow mb-6 p-1">
-                    <button onclick="setCheckinMode('entrada')" id="btn-mode-entrada" class="flex-1 py-3 rounded-md font-bold transition-all bg-green-500 text-white shadow">
-                        <i class="fas fa-sign-in-alt mr-2"></i> ENTRADA (Vincular)
+            <div class="max-w-xl mx-auto pt-4 md:pt-0">
+                
+                <div class="bg-slate-200 p-1.5 rounded-2xl flex shadow-inner mb-8">
+                    <button onclick="setCheckinMode('entrada')" id="btn-mode-entrada" class="flex-1 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-md bg-white text-emerald-600 transform scale-100">
+                        <i class="fas fa-sign-in-alt"></i> ENTRADA
                     </button>
-                    <button onclick="setCheckinMode('saida')" id="btn-mode-saida" class="flex-1 py-3 rounded-md font-bold transition-all text-gray-500 hover:bg-gray-100">
-                        <i class="fas fa-sign-out-alt mr-2"></i> SAÍDA (Baixa)
+                    <button onclick="setCheckinMode('saida')" id="btn-mode-saida" class="flex-1 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700">
+                        <i class="fas fa-sign-out-alt"></i> SAÍDA
                     </button>
                 </div>
 
                 <div id="area-entrada" class="block">
-                    <div class="bg-white p-6 rounded-lg shadow-lg border-t-4 border-green-500">
-                        <h3 class="text-lg font-bold mb-4 text-center">1. Selecione a Criança</h3>
+                    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl shadow-emerald-900/10 border border-slate-100 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
                         
-                        <div class="relative mb-4">
-                            <input type="text" id="busca-crianca" onkeyup="filtrarCriancasEntrada()" placeholder="Digite o nome da criança..." class="w-full p-4 text-lg border-2 border-gray-300 rounded focus:border-green-500 focus:outline-none">
-                            <i class="fas fa-search absolute right-4 top-5 text-gray-400"></i>
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl font-bold text-slate-800">Quem está chegando?</h3>
+                            <p class="text-slate-400 text-sm">Busque pelo nome da criança</p>
+                        </div>
+                        
+                        <div class="relative mb-6">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-slate-400"></i>
+                            </div>
+                            <input type="text" id="busca-crianca" onkeyup="filtrarCriancasEntrada()" placeholder="Digite o nome..." class="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl text-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
                         </div>
 
-                        <div id="resultado-busca-kids" class="max-h-48 overflow-y-auto border rounded bg-gray-50 hidden mb-4">
-                            </div>
+                        <div id="resultado-busca-kids" class="max-h-48 overflow-y-auto rounded-xl border border-slate-100 bg-white hidden mb-4 shadow-lg absolute w-[85%] z-20 custom-scroll"></div>
 
-                        <div id="kid-selecionada" class="hidden bg-green-50 border border-green-200 p-4 rounded mb-4 text-center">
-                            <p class="text-sm text-green-800">Criança Selecionada:</p>
-                            <h4 id="kid-sel-nome" class="text-2xl font-bold text-green-900">Joãozinho</h4>
-                            <p id="kid-sel-detalhe" class="text-sm text-gray-600 mb-3">5 anos - Sala 3-5</p>
+                        <div id="kid-selecionada" class="hidden bg-emerald-50 border border-emerald-100 p-6 rounded-2xl mb-4 text-center relative animate-fade-in-up">
+                            <div class="bg-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-emerald-600">
+                                <i class="fas fa-user-check text-xl"></i>
+                            </div>
+                            <h4 id="kid-sel-nome" class="text-2xl font-display font-bold text-emerald-900 mb-1">Nome da Criança</h4>
+                            <span id="kid-sel-detalhe" class="inline-block bg-emerald-200 text-emerald-800 text-xs px-3 py-1 rounded-full font-bold mb-6">5 anos • Sala 3-5</span>
                             
-                            <hr class="border-green-200 my-3">
-                            
-                            <p class="font-bold text-gray-700 mb-2">2. Bipe ou Digite o Crachá/Pulseira HOJE:</p>
-                            <div class="flex gap-2 justify-center">
-                                <input type="text" id="qr-entrada-manual" placeholder="Nº Pulseira" class="border-2 border-green-500 p-2 rounded w-32 text-center text-xl font-bold bg-white" autofocus>
-                                <button onclick="confirmarEntrada()" class="bg-green-600 text-white px-4 rounded font-bold shadow hover:bg-green-700">CONFIRMAR</button>
+                            <div class="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Número da Pulseira/Crachá</label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="qr-entrada-manual" placeholder="000" class="w-full border-2 border-emerald-500 rounded-lg p-2 text-center text-2xl font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-500/20 bg-emerald-50/50">
+                                    <button onclick="confirmarEntrada()" class="bg-emerald-600 text-white px-5 rounded-lg font-bold shadow-lg hover:bg-emerald-700 transition-all">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div id="area-saida" class="hidden">
-                    <div class="bg-white p-6 rounded-lg shadow-lg border-t-4 border-red-500 text-center">
-                        <h3 class="text-lg font-bold mb-4">Devolução de Crachá</h3>
+                    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl shadow-red-900/10 border border-slate-100 relative overflow-hidden text-center">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-400 to-red-600"></div>
                         
-                        <div class="scanner-box bg-black rounded overflow-hidden mb-4 relative h-64 mx-auto">
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">Escanear Pulseira</h3>
+                        <p class="text-slate-400 text-sm mb-6">Aponte a câmera para o QR Code ou digite</p>
+                        
+                        <div class="scanner-box bg-black rounded-2xl overflow-hidden mb-6 relative h-64 w-full mx-auto shadow-inner border-4 border-slate-100">
                             <div id="reader-saida" style="width: 100%; height: 100%;"></div>
-                            <div class="absolute inset-0 border-2 border-red-500 opacity-30 pointer-events-none"></div>
+                            <div class="absolute top-0 left-0 w-full h-full border-2 border-red-500/50 z-10 pointer-events-none">
+                                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-red-400 rounded-lg shadow-[0_0_20px_rgba(239,68,68,0.5)]"></div>
+                            </div>
                         </div>
 
-                        <p class="text-sm text-gray-500 mb-2">Ou digite o código manualmente:</p>
-                        <div class="flex gap-2 justify-center">
-                            <input type="text" id="qr-saida-manual" placeholder="Cód. Pulseira" class="border-2 border-gray-300 p-2 rounded w-32 text-center text-xl font-bold">
-                            <button onclick="processarSaidaManual()" class="bg-gray-800 text-white px-4 rounded font-bold"><i class="fas fa-check"></i></button>
+                        <div class="flex gap-2 justify-center max-w-xs mx-auto">
+                            <input type="text" id="qr-saida-manual" placeholder="Cód. Pulseira" class="flex-1 bg-slate-50 border border-slate-200 p-3 rounded-lg text-center text-lg font-bold outline-none focus:border-red-500">
+                            <button onclick="processarSaidaManual()" class="bg-slate-800 text-white px-5 rounded-lg font-bold hover:bg-slate-900 shadow-lg">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <div id="status-msg" class="mt-4 hidden p-4 rounded text-center shadow-lg transition-all transform scale-100">
-                    <h3 id="st-titulo" class="text-2xl font-bold"></h3>
-                    <p id="st-desc" class="text-lg"></p>
+                <div id="status-msg" class="mt-6 hidden p-6 rounded-2xl text-center shadow-xl transition-all transform scale-100 border relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-20"><i class="fas fa-info-circle text-6xl"></i></div>
+                    <h3 id="st-titulo" class="text-2xl font-display font-bold mb-2 relative z-10"></h3>
+                    <p id="st-desc" class="text-lg relative z-10 opacity-90"></p>
                 </div>
 
             </div>
@@ -237,22 +355,65 @@
 
     </main>
 
+    <div class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 pb-safe z-50 flex justify-around items-center px-2 py-3 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+        <button onclick="showTab('dashboard')" class="flex flex-col items-center text-slate-400 hover:text-brand-600 active-nav-mobile w-1/5">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Painel</span>
+        </button>
+        <button onclick="showTab('escala')" class="flex flex-col items-center text-slate-400 hover:text-brand-600 active-nav-mobile w-1/5">
+            <i class="fas fa-calendar-check text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Escala</span>
+        </button>
+        
+        <button onclick="showTab('checkin')" class="flex flex-col items-center justify-center -mt-8">
+            <div class="w-14 h-14 bg-slate-900 rounded-full flex items-center justify-center shadow-lg shadow-slate-900/40 text-white border-4 border-white">
+                <i class="fas fa-qrcode text-xl"></i>
+            </div>
+            <span class="text-[10px] font-bold text-slate-700 mt-1">Check-in</span>
+        </button>
+
+        <button onclick="showTab('historico')" class="flex flex-col items-center text-slate-400 hover:text-brand-600 active-nav-mobile w-1/5">
+            <i class="fas fa-history text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Hist.</span>
+        </button>
+        <button onclick="showTab('criancas')" class="flex flex-col items-center text-slate-400 hover:text-brand-600 active-nav-mobile w-1/5">
+            <i class="fas fa-child text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Cad.</span>
+        </button>
+    </div>
+
     <script>
-        // --- CONFIGURAÇÃO ---
         const supabaseUrl = 'https://nekbbkenxcukoortusge.supabase.co'; 
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5la2Jia2VueGN1a29vcnR1c2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTU5MDIsImV4cCI6MjA3ODk3MTkwMn0.D72914Vyz1du1ZDKoNDdwT7YI-D8WPgZe38LbBV2bfc'; 
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // --- NAVEGAÇÃO ---
         function showTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             
-            // Lógica ao abrir abas
+            // Mobile Nav Active State
+            document.querySelectorAll('.active-nav-mobile').forEach(el => el.classList.remove('text-brand-600'));
+            // Desktop Nav Active State
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-white', 'text-brand-600', 'shadow-sm');
+                el.classList.add('text-slate-600');
+            });
+
+            // Update visuals based on ID
+            if(window.innerWidth < 768) {
+               // Simple logic for mobile icons if needed
+            } else {
+                const btnMap = {'dashboard':'nav-dash','historico':'nav-hist','professores':'nav-prof','escala':'nav-esc','criancas':'nav-cad'};
+                if(btnMap[tabId]) {
+                    const btn = document.getElementById(btnMap[tabId]);
+                    btn.classList.add('bg-white', 'text-brand-600', 'shadow-sm');
+                    btn.classList.remove('text-slate-600');
+                }
+            }
+            
             if(tabId === 'professores') carregarProfessores();
             if(tabId === 'escala') { 
                 carregarProfessoresCheckbox(); 
-                // Define data de hoje no filtro e carrega
                 const hoje = new Date().toISOString().split('T')[0];
                 document.getElementById('filtro-escala-data').value = hoje;
                 carregarEscalas(hoje); 
@@ -260,33 +421,31 @@
             if(tabId === 'dashboard') carregarDashboard();
             if(tabId === 'criancas') carregarUltimasCriancas();
             if(tabId === 'checkin') {
-                setCheckinMode('entrada'); // Default entrada
+                setCheckinMode('entrada'); 
             } else {
                 stopScanner();
             }
         }
 
         // ==========================================
-        // 1. DASHBOARD
+        // 1. DASHBOARD (HTML ATUALIZADO)
         // ==========================================
         async function carregarDashboard() {
             const hoje = new Date().toISOString().split('T')[0];
             const divSalas = document.getElementById('painel-salas');
-            divSalas.innerHTML = '<div class="col-span-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+            divSalas.innerHTML = '<div class="col-span-4 text-center text-slate-400 py-10"><i class="fas fa-circle-notch fa-spin text-2xl mb-2"></i><br>Carregando dados...</div>';
 
-            // Buscar Escala Hoje
             const { data: escalas } = await _supabase.from('escala2').select('*').eq('data_culto', hoje);
-            // Buscar Presenças Hoje (Sem saída)
             const { data: presencas } = await _supabase.from('presenca')
                 .select('sala_atual, qrcode_temp, criancas(nome)')
                 .eq('data_culto', hoje)
                 .is('hora_saida', null); 
 
             const estruturaSalas = {
-                "0-2": { titulo: "0 a 2 Anos", profs: "Não escalado", kids: [] },
-                "3-5": { titulo: "3 a 5 Anos", profs: "Não escalado", kids: [] },
-                "6-8": { titulo: "6 a 8 Anos", profs: "Não escalado", kids: [] },
-                "9-12": { titulo: "9 a 12 Anos", profs: "Não escalado", kids: [] }
+                "0-2": { titulo: "0 a 2 Anos", cor: "blue", profs: "---", kids: [] },
+                "3-5": { titulo: "3 a 5 Anos", cor: "emerald", profs: "---", kids: [] },
+                "6-8": { titulo: "6 a 8 Anos", cor: "orange", profs: "---", kids: [] },
+                "9-12": { titulo: "9 a 12 Anos", cor: "purple", profs: "---", kids: [] }
             };
 
             if(escalas) escalas.forEach(esc => { if(estruturaSalas[esc.sala]) estruturaSalas[esc.sala].profs = esc.professores_nomes; });
@@ -295,7 +454,6 @@
             if(presencas) {
                 presencas.forEach(p => {
                     if(p.criancas && estruturaSalas[p.sala_atual]) {
-                        // Mostra nome + número do crachá temporário
                         estruturaSalas[p.sala_atual].kids.push({ nome: p.criancas.nome, qr: p.qrcode_temp });
                         totalCount++;
                     }
@@ -304,33 +462,53 @@
             document.getElementById('dash-total-kids').innerText = totalCount;
 
             divSalas.innerHTML = '';
+            
+            // Mapeamento de Cores para Tailwind classes
+            const colors = {
+                blue: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-500' },
+                emerald: { border: 'border-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'text-emerald-500' },
+                orange: { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-700', icon: 'text-orange-500' },
+                purple: { border: 'border-purple-500', bg: 'bg-purple-50', text: 'text-purple-700', icon: 'text-purple-500' }
+            };
+
             for (const [key, sala] of Object.entries(estruturaSalas)) {
-                let listaKidsHTML = sala.kids.length === 0 ? '<p class="text-gray-400 text-xs italic p-2">Sala vazia</p>' : '<ul class="kid-list text-sm text-gray-700 divide-y">';
+                const tema = colors[sala.cor];
+                
+                let listaKidsHTML = sala.kids.length === 0 
+                    ? '<p class="text-slate-400 text-xs italic p-4 text-center">Sala vazia</p>' 
+                    : '<ul class="divide-y divide-slate-100">';
+                
                 sala.kids.forEach(k => {
-                    listaKidsHTML += `<li class="py-1 px-2 flex justify-between items-center">
-                        <span><i class="fas fa-child text-blue-500 mr-1"></i> ${k.nome}</span>
-                        <span class="bg-yellow-100 text-xs px-1 rounded border border-yellow-200">#${k.qr || '?'}</span>
+                    listaKidsHTML += `
+                    <li class="py-2.5 px-3 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                        <span class="text-sm font-medium text-slate-700 flex items-center">
+                            <i class="fas fa-user-circle ${tema.icon} mr-2 opacity-70"></i> ${k.nome}
+                        </span>
+                        <span class="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200">#${k.qr || '?'}</span>
                     </li>`;
                 });
                 if(sala.kids.length > 0) listaKidsHTML += '</ul>';
 
                 divSalas.innerHTML += `
-                    <div class="bg-white rounded-lg shadow border-t-4 ${sala.kids.length > 0 ? 'border-green-500' : 'border-gray-300'} overflow-hidden">
-                        <div class="p-3 bg-gray-50 border-b flex justify-between items-start">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
+                        <div class="p-4 border-b border-slate-100 flex justify-between items-start bg-gradient-to-r from-white to-slate-50">
                             <div>
-                                <h3 class="font-bold text-lg text-gray-800">${sala.titulo}</h3>
-                                <p class="text-xs text-indigo-600 font-semibold mt-1"><i class="fas fa-chalkboard-teacher"></i> ${sala.profs}</p>
+                                <h3 class="font-bold text-lg text-slate-800">${sala.titulo}</h3>
+                                <p class="text-xs text-slate-500 font-medium mt-1"><i class="fas fa-chalkboard-teacher mr-1"></i> ${sala.profs}</p>
                             </div>
-                            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full font-bold">${sala.kids.length}</span>
+                            <span class="${tema.bg} ${tema.text} text-xs px-2.5 py-1 rounded-full font-bold border ${tema.border} border-opacity-20">${sala.kids.length}</span>
                         </div>
-                        <div class="p-2 bg-white">${listaKidsHTML}</div>
+                        <div class="flex-grow bg-white max-h-64 overflow-y-auto custom-scroll">
+                            ${listaKidsHTML}
+                        </div>
+                        <div class="h-1 w-full ${tema.bg.replace('bg-', 'bg-gradient-to-r from-white via-') + '-500 to-white'}"></div>
                     </div>
                 `;
             }
         }
 
         // ==========================================
-        // 2. CHECK-IN / OUT (CRÍTICO: LÓGICA NOVA)
+        // 2. CHECK-IN / OUT
         // ==========================================
         let checkinMode = 'entrada';
         let criancaSelecionadaID = null;
@@ -347,24 +525,27 @@
             const areaSaida = document.getElementById('area-saida');
 
             if(mode === 'entrada') {
-                btnEntrada.className = "flex-1 py-3 rounded-md font-bold transition-all bg-green-500 text-white shadow transform scale-105";
-                btnSaida.className = "flex-1 py-3 rounded-md font-bold transition-all text-gray-500 hover:bg-gray-100";
+                btnEntrada.className = "flex-1 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-md bg-white text-emerald-600 transform scale-100";
+                btnSaida.className = "flex-1 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200/50";
+                
                 areaEntrada.classList.remove('hidden');
+                areaEntrada.classList.add('animate-fade-in');
                 areaSaida.classList.add('hidden');
-                // Reset Entrada
+                
                 document.getElementById('busca-crianca').value = '';
                 document.getElementById('kid-selecionada').classList.add('hidden');
                 document.getElementById('resultado-busca-kids').classList.add('hidden');
             } else {
-                btnSaida.className = "flex-1 py-3 rounded-md font-bold transition-all bg-red-500 text-white shadow transform scale-105";
-                btnEntrada.className = "flex-1 py-3 rounded-md font-bold transition-all text-gray-500 hover:bg-gray-100";
+                btnSaida.className = "flex-1 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-md bg-white text-red-600 transform scale-100";
+                btnEntrada.className = "flex-1 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200/50";
+                
                 areaEntrada.classList.add('hidden');
                 areaSaida.classList.remove('hidden');
+                areaSaida.classList.add('animate-fade-in');
                 startScannerSaida();
             }
         }
 
-        // --- LÓGICA DE ENTRADA (VINCULAR) ---
         async function filtrarCriancasEntrada() {
             const termo = document.getElementById('busca-crianca').value.toLowerCase();
             const divRes = document.getElementById('resultado-busca-kids');
@@ -377,21 +558,20 @@
             divRes.classList.remove('hidden');
 
             if(!data || data.length === 0) {
-                divRes.innerHTML = '<div class="p-3 text-gray-500 text-sm">Nenhuma criança encontrada. <a href="#" onclick="showTab(\'criancas\')" class="text-blue-500 underline">Cadastrar?</a></div>';
+                divRes.innerHTML = '<div class="p-4 text-slate-500 text-sm text-center">Nenhuma criança encontrada.<br><span class="text-xs">Verifique o cadastro.</span></div>';
                 return;
             }
 
             data.forEach(kid => {
-                // Calcular idade
                 const idade = calcularIdade(kid.data_nascimento);
                 divRes.innerHTML += `
                     <div onclick="selecionarCrianca(${kid.id}, '${kid.nome}', ${idade}, '${kid.sala_fixa || ''}')" 
-                         class="p-3 border-b hover:bg-green-50 cursor-pointer flex justify-between items-center transition-colors">
+                         class="p-4 border-b border-slate-50 hover:bg-emerald-50 cursor-pointer flex justify-between items-center transition-colors group">
                         <div>
-                            <p class="font-bold text-gray-800">${kid.nome}</p>
-                            <p class="text-xs text-gray-500">Resp: ${kid.nome_responsavel || '-'}</p>
+                            <p class="font-bold text-slate-700 group-hover:text-emerald-700">${kid.nome}</p>
+                            <p class="text-xs text-slate-400">Resp: ${kid.nome_responsavel || '-'}</p>
                         </div>
-                        <span class="text-xs bg-gray-200 px-2 py-1 rounded">${idade} anos</span>
+                        <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium">${idade} anos</span>
                     </div>
                 `;
             });
@@ -402,12 +582,10 @@
             document.getElementById('resultado-busca-kids').classList.add('hidden');
             document.getElementById('busca-crianca').value = '';
             
-            // Mostrar card de seleção
             const divSel = document.getElementById('kid-selecionada');
             divSel.classList.remove('hidden');
             document.getElementById('kid-sel-nome').innerText = nome;
             
-            // Definir Sala
             let salaFinal = salaFixa;
             if(!salaFinal) {
                 if (idade <= 2) salaFinal = "0-2";
@@ -416,9 +594,8 @@
                 else if (idade <= 12) salaFinal = "9-12";
                 else salaFinal = "Visitante";
             }
-            document.getElementById('kid-sel-detalhe').innerText = `${idade} anos - Sala Sugerida: ${salaFinal}`;
+            document.getElementById('kid-sel-detalhe').innerText = `${idade} anos • Sala: ${salaFinal}`;
             
-            // Focar no campo de QR code
             setTimeout(() => document.getElementById('qr-entrada-manual').focus(), 100);
         }
 
@@ -428,66 +605,46 @@
 
             const hoje = new Date().toISOString().split('T')[0];
             
-            // Verificar se esta criança JÁ está no sistema hoje sem sair
             const { data: jaExiste } = await _supabase.from('presenca')
-                .select('id')
-                .eq('crianca_id', criancaSelecionadaID)
-                .eq('data_culto', hoje)
-                .is('hora_saida', null);
+                .select('id').eq('crianca_id', criancaSelecionadaID).eq('data_culto', hoje).is('hora_saida', null);
             
-            if(jaExiste && jaExiste.length > 0) {
-                alert('Esta criança já deu entrada hoje!');
-                return;
-            }
+            if(jaExiste && jaExiste.length > 0) { alert('Criança já deu entrada!'); return; }
 
-            // Verificar se esse CRACHÁ já está em uso
             const { data: crachaUso } = await _supabase.from('presenca')
-                .select('id, criancas(nome)')
-                .eq('qrcode_temp', qrTemp)
-                .eq('data_culto', hoje)
-                .is('hora_saida', null);
+                .select('id, criancas(nome)').eq('qrcode_temp', qrTemp).eq('data_culto', hoje).is('hora_saida', null);
 
             if(crachaUso && crachaUso.length > 0) {
-                alert(`Erro: O crachá ${qrTemp} já está sendo usado por ${crachaUso[0].criancas.nome} agora.`);
+                alert(`Erro: Crachá ${qrTemp} já em uso por ${crachaUso[0].criancas.nome}.`);
                 return;
             }
 
-            // Registrar Entrada
-            // Recuperar sala (lógica repetida simplificada)
             const txtDetalhe = document.getElementById('kid-sel-detalhe').innerText;
-            const sala = txtDetalhe.split('Sala Sugerida: ')[1] || '0-2';
+            const sala = txtDetalhe.split('Sala: ')[1] || '0-2';
 
             const { error } = await _supabase.from('presenca').insert([{
                 crianca_id: criancaSelecionadaID,
                 data_culto: hoje,
                 sala_atual: sala,
-                qrcode_temp: qrTemp // AQUI ESTÁ O CAMPO NOVO
+                qrcode_temp: qrTemp
             }]);
 
             if(error) {
-                alert('Erro ao salvar: ' + error.message);
+                alert('Erro: ' + error.message);
             } else {
-                mostrarStatus('Sucesso!', `Entrada registrada para ${document.getElementById('kid-sel-nome').innerText} com pulseira #${qrTemp}`, 'bg-green-100', 'text-green-800');
-                
-                // Resetar UI
+                mostrarStatus('Bem-vindo(a)!', `Entrada confirmada para <b>${document.getElementById('kid-sel-nome').innerText}</b><br>Pulseira #${qrTemp}`, 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
                 document.getElementById('kid-selecionada').classList.add('hidden');
                 document.getElementById('qr-entrada-manual').value = '';
                 criancaSelecionadaID = null;
             }
         }
 
-        // --- LÓGICA DE SAÍDA (LER CRACHÁ) ---
         function startScannerSaida() {
             if(html5QrcodeScanner) return;
             try {
                 html5QrcodeScanner = new Html5Qrcode("reader-saida");
                 html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, 
-                (decodedText) => {
-                    // Sucesso no Scan
-                    html5QrcodeScanner.pause();
-                    processarSaida(decodedText);
-                });
-            } catch(e) { console.log("Erro cam", e); }
+                (decodedText) => { html5QrcodeScanner.pause(); processarSaida(decodedText); });
+            } catch(e) { console.log(e); }
         }
 
         function stopScanner() {
@@ -504,48 +661,34 @@
         async function processarSaida(qrCodeLido) {
             const hoje = new Date().toISOString().split('T')[0];
 
-            // Buscar quem está usando esse QR Code HOJE e não saiu
             const { data: registro } = await _supabase.from('presenca')
                 .select('id, criancas(nome, nome_responsavel)')
-                .eq('qrcode_temp', qrCodeLido)
-                .eq('data_culto', hoje)
-                .is('hora_saida', null)
-                .maybeSingle();
+                .eq('qrcode_temp', qrCodeLido).eq('data_culto', hoje).is('hora_saida', null).maybeSingle();
 
             if(!registro) {
-                mostrarStatus('Não Encontrado', `Nenhuma criança ativa com a pulseira #${qrCodeLido} hoje.`, 'bg-red-100', 'text-red-800');
-                resumeScanner();
-                return;
+                mostrarStatus('Não Encontrado', `Nenhuma criança ativa com a pulseira #${qrCodeLido} hoje.`, 'bg-red-50', 'text-red-800', 'border-red-200');
+                resumeScanner(); return;
             }
 
-            // Realizar Saída
             await _supabase.from('presenca').update({ hora_saida: new Date() }).eq('id', registro.id);
-
-            mostrarStatus('Saída Confirmada', `Até logo, <b>${registro.criancas.nome}</b>!<br>Responsável: ${registro.criancas.nome_responsavel}`, 'bg-blue-100', 'text-blue-800');
-            
+            mostrarStatus('Saída Realizada', `Até logo, <b>${registro.criancas.nome}</b>!<br>Entregue a: ${registro.criancas.nome_responsavel}`, 'bg-blue-50', 'text-blue-800', 'border-blue-200');
             if(navigator.vibrate) navigator.vibrate(200);
-            
             document.getElementById('qr-saida-manual').value = '';
             setTimeout(() => resumeScanner(), 4000);
         }
 
-        function resumeScanner() {
-            if(html5QrcodeScanner && checkinMode === 'saida') html5QrcodeScanner.resume();
-        }
+        function resumeScanner() { if(html5QrcodeScanner && checkinMode === 'saida') html5QrcodeScanner.resume(); }
 
-        function mostrarStatus(titulo, desc, corBg, corTexto) {
+        function mostrarStatus(titulo, desc, corBg, corTexto, corBorda) {
             const div = document.getElementById('status-msg');
-            const t = document.getElementById('st-titulo');
-            const d = document.getElementById('st-desc');
-            
-            div.className = `mt-4 p-6 rounded text-center shadow-lg transition-all ${corBg} ${corTexto} pulse-success`;
-            t.innerHTML = titulo;
-            d.innerHTML = desc;
+            div.className = `mt-6 p-6 rounded-2xl text-center shadow-lg transition-all transform scale-100 border relative overflow-hidden animate-bounce-in ${corBg} ${corTexto} ${corBorda}`;
+            document.getElementById('st-titulo').innerHTML = titulo;
+            document.getElementById('st-desc').innerHTML = desc;
             div.classList.remove('hidden');
         }
 
         // ==========================================
-        // 3. ESCALA (COM FILTRO)
+        // OUTRAS FUNÇÕES (HTML ATUALIZADO NOS RENDERS)
         // ==========================================
         async function salvarEscala() {
             const dataCulto = document.getElementById('escala-data').value;
@@ -554,46 +697,36 @@
             const nomes = Array.from(checkboxes).map(cb => cb.value).join(', ');
             
             if(!dataCulto || checkboxes.length === 0) return alert('Preencha a data e selecione professores.');
-            
             await _supabase.from('escala2').insert([{ data_culto: dataCulto, sala: sala, professores_nomes: nomes }]);
-            alert('Escala salva!');
-            
-            // Atualiza filtro para a data que acabou de salvar e recarrega
+            alert('Escala salva com sucesso!');
             document.getElementById('filtro-escala-data').value = dataCulto;
             carregarEscalas(dataCulto);
         }
 
         async function carregarEscalas(dataFiltro) {
             const lista = document.getElementById('lista-escalas');
-            lista.innerHTML = '<p class="text-gray-500 text-sm">Buscando...</p>';
-
+            lista.innerHTML = '<p class="text-slate-400 text-sm text-center py-4"><i class="fas fa-spinner fa-spin"></i> Buscando...</p>';
             let query = _supabase.from('escala2').select('*');
+            if(dataFiltro) query = query.eq('data_culto', dataFiltro); else query = query.limit(10);
             
-            if(dataFiltro) {
-                query = query.eq('data_culto', dataFiltro);
-            } else {
-                query = query.limit(10); // Se não tiver data, traz últimos
-            }
-            
-            const { data } = await query.order('sala'); // Ordena por sala para agrupar visualmente
+            const { data } = await query.order('sala');
 
             lista.innerHTML = '';
             if(!data || data.length === 0) {
-                lista.innerHTML = '<div class="p-4 bg-gray-50 rounded text-center text-gray-500">Ninguém escalado para esta data.</div>';
+                lista.innerHTML = '<div class="p-6 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-center text-slate-400 text-sm">Nenhuma escala encontrada.</div>';
                 return;
             }
 
             data.forEach(e => {
-                // Formatação simples da data para exibição
                 const dataFormatada = e.data_culto.split('-').reverse().join('/');
                 lista.innerHTML += `
-                    <div class="bg-indigo-50 p-3 rounded border border-indigo-100 flex justify-between items-center">
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center group hover:border-brand-300 transition-colors">
                         <div>
-                            <span class="text-xs font-bold text-indigo-400 block">${dataFormatada}</span>
-                            <span class="font-bold text-indigo-800 text-lg">Sala ${e.sala}</span>
+                            <span class="text-[10px] font-bold text-brand-500 uppercase tracking-wider block mb-1"><i class="far fa-calendar-alt"></i> ${dataFormatada}</span>
+                            <span class="font-display font-bold text-slate-800 text-base">Sala ${e.sala}</span>
                         </div>
                         <div class="text-right">
-                            <p class="text-gray-700 font-medium text-sm">${e.professores_nomes}</p>
+                            <p class="text-slate-600 font-medium text-sm bg-slate-50 px-3 py-1 rounded-lg">${e.professores_nomes}</p>
                         </div>
                     </div>`;
             });
@@ -604,13 +737,10 @@
             const container = document.getElementById('escala-prof-select');
             container.innerHTML = '';
             if(data) data.forEach(p => {
-                container.innerHTML += `<label class="flex items-center space-x-2 cursor-pointer bg-white p-2 rounded border hover:bg-gray-50"><input type="checkbox" value="${p.nome}" class="prof-checkbox accent-orange-500"><span class="text-sm font-medium text-gray-700">${p.nome}</span></label>`;
+                container.innerHTML += `<label class="flex items-center space-x-3 cursor-pointer bg-white p-3 rounded-lg border border-slate-100 hover:bg-slate-50 hover:border-slate-200 transition-all"><input type="checkbox" value="${p.nome}" class="prof-checkbox w-4 h-4 text-accent-500 rounded focus:ring-accent-500 border-gray-300"><span class="text-sm font-medium text-slate-700">${p.nome}</span></label>`;
             });
         }
 
-        // ==========================================
-        // OUTRAS FUNÇÕES (Cadastro, Histórico, Utils)
-        // ==========================================
         async function addProfessor() {
             const nome = document.getElementById('prof-nome').value;
             const sala = document.getElementById('prof-sala').value;
@@ -624,10 +754,15 @@
             const lista = document.getElementById('lista-professores');
             lista.innerHTML = '';
             if(data) data.forEach(p => {
-                lista.innerHTML += `<tr class="border-b"><td class="p-3 font-medium">${p.nome}</td><td class="p-3 text-sm">${p.sala_preferencia||'-'}</td><td class="p-3"><button onclick="delProf(${p.id})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></td></tr>`;
+                lista.innerHTML += `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-4 font-medium text-slate-700">${p.nome}</td>
+                    <td class="p-4 text-sm text-slate-500"><span class="bg-slate-100 px-2 py-1 rounded border border-slate-200">${p.sala_preferencia||'-'}</span></td>
+                    <td class="p-4 text-right"><button onclick="delProf(${p.id})" class="text-slate-400 hover:text-red-500 transition-colors p-2"><i class="fas fa-trash-alt"></i></button></td>
+                </tr>`;
             });
         }
-        async function delProf(id) { if(confirm('Excluir?')) { await _supabase.from('professores').delete().eq('id', id); carregarProfessores(); } }
+        async function delProf(id) { if(confirm('Excluir este professor?')) { await _supabase.from('professores').delete().eq('id', id); carregarProfessores(); } }
 
         async function addCrianca() {
             const nome = document.getElementById('kid-nome').value;
@@ -636,19 +771,27 @@
             const sala = document.getElementById('kid-sala').value;
 
             if(!nome || !nasc) return alert('Preencha Nome e Data de Nascimento.');
-            // QR Code removido do cadastro obrigatório, pois é dinâmico agora
-            const payload = { nome, data_nascimento: nasc, nome_responsavel: resp, qrcode_code: 'DYNAM_' + Date.now() }; // Placeholder
+            const payload = { nome, data_nascimento: nasc, nome_responsavel: resp, qrcode_code: 'DYNAM_' + Date.now() }; 
             if(sala) payload.sala_fixa = sala;
             const { error } = await _supabase.from('criancas').insert([payload]);
             if(error) alert('Erro: ' + error.message);
-            else { alert('Criança cadastrada!'); document.getElementById('kid-nome').value = ''; carregarUltimasCriancas(); }
+            else { alert('Criança cadastrada com sucesso!'); document.getElementById('kid-nome').value = ''; carregarUltimasCriancas(); }
         }
         async function carregarUltimasCriancas() {
             const { data } = await _supabase.from('criancas').select('*').order('id', {ascending: false}).limit(5);
             const div = document.getElementById('lista-criancas');
             div.innerHTML = '';
             if(data) data.forEach(c => {
-                div.innerHTML += `<div class="border-b py-2 flex justify-between items-center text-sm"><div><span class="font-bold text-gray-700">${c.nome}</span><div class="text-xs text-gray-500">Resp: ${c.nome_responsavel || '-'}</div></div></div>`;
+                div.innerHTML += `
+                <div class="border-b border-slate-50 py-3 flex justify-between items-center text-sm last:border-0 hover:bg-slate-50 px-2 rounded-lg transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">${c.nome.substring(0,2).toUpperCase()}</div>
+                        <div>
+                            <span class="font-bold text-slate-700 block">${c.nome}</span>
+                            <div class="text-xs text-slate-400">Resp: ${c.nome_responsavel || '-'}</div>
+                        </div>
+                    </div>
+                </div>`;
             });
         }
 
@@ -656,43 +799,42 @@
             const dataBusca = document.getElementById('hist-data').value;
             if(!dataBusca) return alert("Selecione uma data.");
             const divResult = document.getElementById('hist-resultado');
-            divResult.innerHTML = '<p class="text-center">Carregando...</p>';
+            divResult.innerHTML = '<p class="text-center text-slate-400 py-8"><i class="fas fa-spinner fa-spin"></i> Carregando...</p>';
 
-            const { data: historico } = await _supabase
-                .from('presenca')
+            const { data: historico } = await _supabase.from('presenca')
                 .select('sala_atual, hora_entrada, hora_saida, qrcode_temp, criancas(nome)')
-                .eq('data_culto', dataBusca)
-                .order('sala_atual');
+                .eq('data_culto', dataBusca).order('sala_atual');
 
             if(!historico || historico.length === 0){
-                divResult.innerHTML = `<div class="bg-yellow-100 p-4 rounded text-center text-yellow-800">Sem registros para esta data.</div>`;
+                divResult.innerHTML = `<div class="bg-amber-50 border border-amber-200 p-6 rounded-xl text-center text-amber-800"><i class="fas fa-exclamation-circle text-2xl mb-2"></i><br>Nenhum registro encontrado para esta data.</div>`;
                 return;
             }
 
-            // Agrupamento manual para relatório
             const grupos = {};
-            historico.forEach(h => {
-                if(!grupos[h.sala_atual]) grupos[h.sala_atual] = [];
-                grupos[h.sala_atual].push(h);
-            });
+            historico.forEach(h => { if(!grupos[h.sala_atual]) grupos[h.sala_atual] = []; grupos[h.sala_atual].push(h); });
 
             divResult.innerHTML = '';
             for(const [sala, items] of Object.entries(grupos)) {
                 let linhas = items.map(i => `
-                    <tr class="border-b">
-                        <td class="p-2">${i.criancas ? i.criancas.nome : 'Excluído'} <span class="text-xs text-gray-400">#${i.qrcode_temp}</span></td>
-                        <td class="p-2">${new Date(i.hora_entrada).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
-                        <td class="p-2">${i.hora_saida ? new Date(i.hora_saida).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '<span class="text-red-500 font-bold">---</span>'}</td>
+                    <tr class="border-b border-slate-50 hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-700">${i.criancas ? i.criancas.nome : 'Excluído'} <span class="text-[10px] text-slate-400 bg-slate-100 px-1 rounded ml-1">#${i.qrcode_temp}</span></td>
+                        <td class="p-3 text-emerald-600 text-sm"><i class="fas fa-arrow-down mr-1"></i> ${new Date(i.hora_entrada).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                        <td class="p-3 text-sm">${i.hora_saida ? '<span class="text-blue-600"><i class="fas fa-arrow-up mr-1"></i> ' + new Date(i.hora_saida).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span>' : '<span class="text-red-400 font-bold text-xs bg-red-50 px-2 py-1 rounded">PENDENTE</span>'}</td>
                     </tr>
                 `).join('');
                 
                 divResult.innerHTML += `
-                    <div class="bg-white rounded shadow p-4 border-l-4 border-blue-500">
-                        <h3 class="font-bold text-lg mb-2">Sala ${sala} <span class="text-sm font-normal text-gray-500">(${items.length} crianças)</span></h3>
-                        <table class="w-full text-sm text-left">
-                            <thead class="bg-gray-100"><tr><th>Nome</th><th>Entrada</th><th>Saída</th></tr></thead>
-                            <tbody>${linhas}</tbody>
-                        </table>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 overflow-hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-display font-bold text-lg text-slate-800">Sala ${sala}</h3>
+                            <span class="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1 rounded-full">${items.length} Crianças</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left whitespace-nowrap">
+                                <thead class="bg-slate-50 text-slate-500"><tr><th class="p-2 pl-3">Nome</th><th class="p-2">Entrada</th><th class="p-2">Saída</th></tr></thead>
+                                <tbody>${linhas}</tbody>
+                            </table>
+                        </div>
                     </div>`;
             }
         }
